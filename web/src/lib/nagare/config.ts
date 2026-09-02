@@ -15,3 +15,5 @@ export const VOYAGER = 'https://voyager.online'
 export const STRK_DECIMALS = 18
 
 export const POOL_FEE = 6n * 10n ** 18n
+
+export const MAX_OFFER_HOURS = 24

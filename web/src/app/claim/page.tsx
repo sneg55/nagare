@@ -119,8 +119,7 @@ export default function ClaimPage() {
               <button
                 className="btn"
                 onClick={() => {
-                  const fresh = generateKeypair()
-                  saveKey(`stream:${streamId}:rekey-target`, fresh)
+                  saveKey(`stream:${streamId}:rekey-target`, generateKeypair())
                   window.location.href = `/app/streams/${streamId}`
                 }}
               >

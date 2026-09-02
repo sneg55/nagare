@@ -18,11 +18,13 @@ export async function buildPayout(
   privateKey: string,
   recipientAddress: string,
   prepare: PrepareFn,
+  generation?: bigint,
 ): Promise<WALLET_API.STRK20_ACTION[]> {
+  const arg = generation === undefined ? undefined : generation.toString()
   const probeOf = (sig?: [string, string]) =>
-    invokeCalldata({ op, streamId, noteId: OPEN_NOTE_PLACEHOLDER, sig })
+    invokeCalldata({ op, streamId, arg, noteId: OPEN_NOTE_PLACEHOLDER, sig })
 
-  const params: PayoutParams = { op, streamId, recipientAddress }
+  const params: PayoutParams = { op, streamId, arg, recipientAddress }
   const first = await prepare(payoutActions(params))
   const noteId = resolveNoteId(first, probeOf())
 
@@ -30,6 +32,7 @@ export async function buildPayout(
     streamId,
     op,
     noteId,
+    arg,
     streamNonce: stream.nonce,
   })
 

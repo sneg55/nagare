@@ -351,6 +351,9 @@ button:disabled {
 }
 
 .wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
   font-family: var(--serif);
   font-size: 22px;
   letter-spacing: -0.02em;

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getStream, getOffer, type Stream, type Offer } from '@/lib/nagare/read'
-import { loadKey, publicKeyOf } from '@/lib/nagare/keys'
+import { loadKey, publicKeyOf, saveKey, generateKeypair } from '@/lib/nagare/keys'
 import { buildPayout } from '@/lib/nagare/flow'
 import { keyedActions, signKeyed } from '@/lib/nagare/actions'
 import {
@@ -24,6 +24,7 @@ import { Meter } from './Meter'
 import { useWallet } from './WalletProvider'
 import { useAction, ActionStatus } from './ActionRunner'
 import { watch } from '@/lib/nagare/watch'
+import { SalePanel } from './SalePanel'
 
 export function StreamDetail({ id }: { id: number }) {
   const { conn, prepare } = useWallet()
@@ -32,6 +33,15 @@ export function StreamDetail({ id }: { id: number }) {
   const [offer, setOffer] = useState<Offer | null>(null)
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000))
   const [newKey, setNewKey] = useState('')
+  const [rekeyPending, setRekeyPending] = useState<{ privateKey: string; publicKey: string } | null>(null)
+
+  useEffect(() => {
+    const held = loadKey(`stream:${id}:rekey-target`)
+    if (held) {
+      setRekeyPending(held)
+      setNewKey(held.publicKey)
+    }
+  }, [id])
 
   const load = useCallback(async () => {
     if (!valid) return
@@ -130,6 +140,10 @@ export function StreamDetail({ id }: { id: number }) {
       if (!recipientKey) throw new Error('You do not hold the recipient key for this stream.')
       const target = newKey.trim()
       if (!/^0x[0-9a-fA-F]{1,63}$/.test(target)) throw new Error('That does not look like a Nagare key.')
+      if (rekeyPending && BigInt(target) === BigInt(rekeyPending.publicKey)) {
+        saveKey(`stream:${id}:recipient`, rekeyPending)
+        window.localStorage.removeItem('nagare.keys.v1.pending')
+      }
       const sig = signKeyed(recipientKey.privateKey, {
         streamId: id,
         op: 'Transfer',
@@ -247,10 +261,11 @@ export function StreamDetail({ id }: { id: number }) {
 
                 {canTransfer(stream, now, offer!) || canList(stream, now) ? (
                 <div className="stack-tight">
-                  <h3>Hand it to someone else</h3>
+                  <h3>{rekeyPending ? 'Take control with your own key' : 'Hand it to someone else'}</h3>
                   <p className="muted">
-                    Re-key this stream to a new holder. Your key stops working the moment
-                    it lands.
+                    {rekeyPending
+                      ? 'A fresh key is ready in this browser. Moving the stream onto it means the person who sent you the claim link can no longer act as you.'
+                      : 'Re-key this stream to a new holder. Your key stops working the moment it lands.'}
                   </p>
                   <input
                     value={newKey}
@@ -260,11 +275,11 @@ export function StreamDetail({ id }: { id: number }) {
                   />
                   <div style={{ display: 'flex', gap: 'var(--s2)', flexWrap: 'wrap' }}>
                     <button
-                      className="btn"
+                      className={rekeyPending ? 'btn btn-primary' : 'btn'}
                       onClick={runTransfer}
                       disabled={!canTransfer(stream, now, offer!)}
                     >
-                      Transfer this stream
+                      {rekeyPending ? 'Move it onto my key' : 'Transfer this stream'}
                     </button>
                     <button
                       className="btn btn-quiet"
@@ -338,6 +353,16 @@ export function StreamDetail({ id }: { id: number }) {
                 </a>
               </p>
             </div>
+            {offer ? (
+              <SalePanel
+                id={id}
+                stream={stream}
+                offer={offer}
+                now={now}
+                isRecipient={isRecipient}
+                onDone={load}
+              />
+            ) : null}
           </aside>
         </div>
       </div>
