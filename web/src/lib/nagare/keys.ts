@@ -1,0 +1,62 @@
+import { ec, num } from 'starknet'
+
+export type Keypair = {
+  privateKey: string
+  publicKey: string
+}
+
+export function generateKeypair(): Keypair {
+  const privateKey = num.toHex(
+    num.toBigInt('0x' + Buffer.from(ec.starkCurve.utils.randomPrivateKey()).toString('hex')),
+  )
+  return { privateKey, publicKey: ec.starkCurve.getStarkKey(privateKey) }
+}
+
+export function publicKeyOf(privateKey: string): string {
+  return ec.starkCurve.getStarkKey(privateKey)
+}
+
+export function signHash(privateKey: string, messageHash: string): [string, string] {
+  const s = ec.starkCurve.sign(messageHash, privateKey)
+  return [num.toHex(s.r), num.toHex(s.s)]
+}
+
+const STORE_KEY = 'nagare.keys.v1'
+
+type KeyStore = Record<string, Keypair>
+
+function read(): KeyStore {
+  if (typeof window === 'undefined') return {}
+  try {
+    return JSON.parse(window.localStorage.getItem(STORE_KEY) ?? '{}') as KeyStore
+  } catch {
+    return {}
+  }
+}
+
+function write(store: KeyStore) {
+  window.localStorage.setItem(STORE_KEY, JSON.stringify(store))
+}
+
+export function saveKey(id: string, keypair: Keypair) {
+  const store = read()
+  store[id] = keypair
+  write(store)
+}
+
+export function loadKey(id: string): Keypair | undefined {
+  return read()[id]
+}
+
+export function allKeys(): KeyStore {
+  return read()
+}
+
+export function exportKeys(): string {
+  return JSON.stringify(read())
+}
+
+export function importKeys(blob: string) {
+  const parsed = JSON.parse(blob) as KeyStore
+  write({ ...read(), ...parsed })
+}
