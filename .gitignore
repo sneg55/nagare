@@ -1,0 +1,8 @@
+docs/internal/
+.env
+.env.*
+node_modules/
+out/
+.next/
+target/
+.snfoundry_cache/
