@@ -29,6 +29,7 @@ export default function Harness() {
   const [endMinutes, setEndMinutes] = useState('20')
   const [streamId, setStreamId] = useState('1')
   const [busy, setBusy] = useState(false)
+  const [registered, setRegistered] = useState<boolean | null>(null)
 
   const say = useCallback((text: string, hash?: string) => {
     setLog((l) => [...l, { at: new Date().toISOString().slice(11, 19), text, hash }])
@@ -61,7 +62,31 @@ export default function Harness() {
       const c = await connectWallet(raw)
       setConn(c)
       say(`connected ${c.address}`)
-      const balances = await c.wallet.strk20Balances([])
+      try {
+        const balances = await c.wallet.strk20Balances([])
+        setRegistered(true)
+        if (balances.length === 0) {
+          say('registered, but nothing shielded yet: shield some STRK inside Ready first')
+        } else {
+          say(`shielded balances: ${JSON.stringify(balances)}`)
+        }
+      } catch (e) {
+        const msg = (e as Error).message ?? String(e)
+        if (/NOT_REGISTERED/.test(msg)) {
+          setRegistered(false)
+          say('this wallet is connected but not registered for private balances')
+          say('open Ready and enable private balances (STRK20), then press Recheck')
+        } else {
+          throw e
+        }
+      }
+    })
+
+  const recheck = () =>
+    guard('recheck', async () => {
+      if (!conn) throw new Error('connect first')
+      const balances = await conn.wallet.strk20Balances([])
+      setRegistered(true)
       say(`shielded balances: ${JSON.stringify(balances)}`)
     })
 
@@ -194,7 +219,17 @@ export default function Harness() {
             Connect {w.name}
           </button>
         ))}
-        {conn ? <span style={{ marginLeft: 12 }}>connected {conn.address.slice(0, 10)}…</span> : null}
+        {conn ? (
+          <>
+            <button onClick={recheck} disabled={busy} style={{ marginLeft: 8 }}>
+              Recheck registration
+            </button>
+            <span style={{ marginLeft: 12 }}>
+              {conn.address.slice(0, 10)}…{' '}
+              {registered === null ? '' : registered ? '(registered)' : '(not registered)'}
+            </span>
+          </>
+        ) : null}
       </section>
 
       <section style={{ marginTop: 24, display: 'grid', gap: 8, maxWidth: 480 }}>

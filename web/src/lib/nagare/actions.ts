@@ -43,6 +43,7 @@ export function signingHash(input: SigningInput): string {
 }
 
 const ZERO = '0x0'
+export const OPEN_NOTE_PLACEHOLDER = '${openNoteIds[0]}'
 const NOTE_SLOT = 10
 const CALLDATA_LEN = 13
 
@@ -63,7 +64,7 @@ export type InvokeFields = {
 
 export function invokeCalldata(f: InvokeFields): string[] {
   const felt = (v: string | bigint | number | undefined) =>
-    v === undefined ? ZERO : typeof v === 'string' ? v : num.toHex(BigInt(v))
+    v === undefined ? ZERO : num.toHex(BigInt(v))
   return [
     num.toHex(Op[f.op]),
     felt(f.streamId),
@@ -75,13 +76,11 @@ export function invokeCalldata(f: InvokeFields): string[] {
     felt(f.senderPk),
     felt(f.recipientPk),
     felt(f.arg),
-    f.noteId ?? ZERO,
-    f.sig?.[0] ?? ZERO,
-    f.sig?.[1] ?? ZERO,
+    f.noteId === undefined ? ZERO : f.noteId === OPEN_NOTE_PLACEHOLDER ? f.noteId : num.toHex(BigInt(f.noteId)),
+    felt(f.sig?.[0]),
+    felt(f.sig?.[1]),
   ]
 }
-
-export const OPEN_NOTE_PLACEHOLDER = '${openNoteIds[0]}'
 
 export type CreateParams = {
   total: bigint
