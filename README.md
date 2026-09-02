@@ -52,6 +52,10 @@ All eight run through `privacy_invoke`, callable only by the STRK20 pool.
 Vesting is linear from `start` to `end` with a `cliff` before which nothing is
 withdrawable, the same curve as Tokei's LockupLinear.
 
+Every operation is a STRK20 private transaction, and the pool charges a flat 6 STRK fee
+for each one, taken from the sender's shielded balance on top of the amount being moved.
+That fee is the pool's, not Nagare's.
+
 ## Deployment
 
 Live on Starknet mainnet, against the STRK20 pool at
@@ -68,9 +72,12 @@ address, and this table is how you tell which one you are looking at.
 
 ## Status
 
-Contract deployed, 46 tests green under snforge, including a signature vector generated
-in TypeScript and verified in Cairo so the browser signer and the contract cannot drift.
-The web client and the demo are in progress.
+Create, Withdraw and Cancel are proven on Starknet mainnet, each carrying pool events and
+a Nagare event; the hashes are in [`strk20.json`](strk20.json). The contract has 46 tests
+green under snforge, including a signature vector generated in TypeScript and verified in
+Cairo so the browser signer and the contract cannot drift.
+
+The product client and the demo are in progress.
 
 Not audited.
 
