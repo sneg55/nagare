@@ -46,8 +46,8 @@ export default function StreamsPage() {
 
   return (
     <section className="band">
-      <div className="wrap stack" style={{ gap: 'var(--s5)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 'var(--s3)', flexWrap: 'wrap' }}>
+      <div className="wrap stack stack-lg">
+        <div className="split split-end">
           <div className="stack-tight">
             <h1>Your streams</h1>
             <p className="muted">
@@ -77,10 +77,9 @@ export default function StreamsPage() {
                 <Link
                   href={`/app/streams/${id}`}
                   key={id}
-                  className="card card-outlined stack-tight"
-                  style={{ textDecoration: 'none' }}
+                  className="card card-outlined stack-tight backlink"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--s2)' }}>
+                  <div className="split align-center">
                     <span className="muted">Stream {id}</span>
                     <span className={status === 'vesting' ? 'badge badge-live' : 'badge'}>
                       {STATUS_LABEL[status]}
@@ -107,14 +106,14 @@ export default function StreamsPage() {
 
         <KeyBackup />
 
-        <div className="card stack-tight" style={{ background: 'var(--cream)' }}>
+        <div className="card card-cream stack-tight">
           <h2>Add a stream by id</h2>
           <p className="muted">
             If someone gave you a stream id, put it here to watch it. You will need the
             matching key to do anything with it.
           </p>
-          <div style={{ display: 'flex', gap: 'var(--s2)', flexWrap: 'wrap' }}>
-            <label className="field" style={{ width: 120 }}>
+          <div className="row-actions">
+            <label className="field field-narrow">
               <span className="visually-hidden">Stream id</span>
               <input
                 value={addId}

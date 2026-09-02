@@ -10,7 +10,7 @@ export function Mark({ size = 30 }: { size?: number }) {
       strokeLinecap="round"
       aria-hidden="true"
       focusable="false"
-      style={{ display: 'block', flex: 'none' }}
+      className="mark"
     >
       <path d="M2 6.6c3.1 0 3.3-3 6.6-3s3.5 3 6.7 3 3.3-3 6.7-3" opacity="0.3" />
       <path d="M2 12c3.1 0 3.3-3 6.6-3s3.5 3 6.7 3 3.3-3 6.7-3" />

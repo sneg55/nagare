@@ -170,7 +170,7 @@ export function SalePanel({
             Offering escrows your STRK in the contract now. If the holder accepts, the
             position becomes yours; if they do not, you take it back.
           </p>
-          <div style={{ display: 'grid', gap: 'var(--s2)', gridTemplateColumns: '1fr 1fr' }}>
+          <div className="two-up">
             <label className="field">
               <span>Your price in STRK</span>
               <input value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal" />

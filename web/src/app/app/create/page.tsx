@@ -21,7 +21,6 @@ export default function CreatePage() {
   const [recipientKey, setRecipientKey] = useState('')
   const [mode, setMode] = useState<'link' | 'key'>('link')
   const [link, setLink] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const { phase, run, reset } = useAction('Create')
 
   const totalCost = (() => {
@@ -33,7 +32,6 @@ export default function CreatePage() {
   })()
 
   const submit = () => {
-    setError(null)
     setLink(null)
     void run(async () => {
       const total = parseStrk(amount)
@@ -83,7 +81,7 @@ export default function CreatePage() {
 
   return (
     <section className="band">
-      <div className="narrow stack" style={{ gap: 'var(--s5)' }}>
+      <div className="narrow stack stack-lg">
         <div className="stack-tight">
           <h1>Open a stream</h1>
           <p className="lead">
@@ -98,7 +96,7 @@ export default function CreatePage() {
             <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" />
           </label>
 
-          <div style={{ display: 'grid', gap: 'var(--s2)', gridTemplateColumns: '1fr 1fr' }}>
+          <div className="two-up">
             <label className="field">
               <span>Cliff, in days from now</span>
               <input value={cliffDays} onChange={(e) => setCliffDays(e.target.value)} inputMode="numeric" />
@@ -111,18 +109,18 @@ export default function CreatePage() {
 
           <div className="stack-tight">
             <span className="muted">Who receives it</span>
-            <div style={{ display: 'flex', gap: 'var(--s2)', flexWrap: 'wrap' }}>
+            <div className="row-actions" role="group" aria-label="Who receives it">
               <button
-                className="btn"
+                className={mode === 'link' ? 'btn btn-selected' : 'btn'}
                 onClick={() => setMode('link')}
-                style={mode === 'link' ? { background: 'var(--ink)', color: 'var(--paper)' } : undefined}
+                aria-pressed={mode === 'link'}
               >
                 Send them a claim link
               </button>
               <button
-                className="btn"
+                className={mode === 'key' ? 'btn btn-selected' : 'btn'}
                 onClick={() => setMode('key')}
-                style={mode === 'key' ? { background: 'var(--ink)', color: 'var(--paper)' } : undefined}
+                aria-pressed={mode === 'key'}
               >
                 They gave me a key
               </button>
@@ -172,8 +170,6 @@ export default function CreatePage() {
             exists, or losing this browser loses the stream.
           </p>
 
-          {error ? <p role="alert">{error}</p> : null}
-
           <div>
             <button className="btn btn-primary" onClick={submit} disabled={busy || !conn}>
               {conn ? 'Fund this stream' : 'Connect a wallet to fund'}
@@ -190,8 +186,11 @@ export default function CreatePage() {
               Copy this now. It is not stored anywhere and this page will not show it
               again.
             </p>
-            <input readOnly value={link} onFocus={(e) => e.currentTarget.select()} className="field" style={{ width: '100%', padding: 12, border: '1px solid var(--fog)', borderRadius: 'var(--r-ui)' }} />
-            <div style={{ display: 'flex', gap: 'var(--s2)' }}>
+            <label className="field">
+              <span className="visually-hidden">Claim link</span>
+              <input readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
+            </label>
+            <div className="row-actions">
               <button className="btn" onClick={() => void navigator.clipboard.writeText(link)}>
                 Copy link
               </button>

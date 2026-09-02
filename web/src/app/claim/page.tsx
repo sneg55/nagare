@@ -103,7 +103,7 @@ export default function ClaimPage() {
     <>
     <TopBar cta={false} />
     <main id="content" className="band">
-      <div className="narrow stack" style={{ gap: 'var(--s5)' }}>
+      <div className="narrow stack stack-lg">
         <div className="stack-tight">
           <h1>{toStrk(stream.total)} STRK is vesting to you</h1>
           <p className="lead">
@@ -112,7 +112,7 @@ export default function ClaimPage() {
           </p>
         </div>
 
-        <div className="card" style={{ background: 'var(--cream)' }}>
+        <div className="card card-cream">
           <div className="stack-tight">
             <h3>Take control of it first</h3>
             <p className="muted">
@@ -124,7 +124,7 @@ export default function ClaimPage() {
               Nothing forces you to. If you trust the sender and want to leave it, the
               stream still pays out to this key.
             </p>
-            <div style={{ display: 'flex', gap: 'var(--s2)', flexWrap: 'wrap' }}>
+            <div className="row-actions">
               <Link href={`/app/streams/${streamId}`} className="btn btn-primary">
                 Open the stream
               </Link>

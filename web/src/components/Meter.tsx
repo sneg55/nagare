@@ -18,8 +18,8 @@ export function Meter({
       aria-valuemax={100}
       aria-label={label}
     >
-      <span style={{ width: `${ready * 100}%`, background: 'var(--fog)' }}>
-        <i style={{ display: 'block', height: '100%', width: ready > 0 ? `${(taken / ready) * 100}%` : '0%', background: 'var(--ink)' }} />
+      <span style={{ width: `${ready * 100}%` }}>
+        <i style={{ width: ready > 0 ? `${(taken / ready) * 100}%` : '0%' }} />
       </span>
     </div>
   )

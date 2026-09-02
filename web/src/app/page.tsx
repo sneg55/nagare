@@ -12,16 +12,16 @@ export default function Landing() {
 
       <main id="content">
       <section className="band">
-        <div className="wrap stack" style={{ gap: 'var(--s5)' }}>
-          <h1 className="display" style={{ maxWidth: '16ch' }}>
-            Vesting that doesn&rsquo;t publish your cap table.
+        <div className="wrap stack stack-lg">
+          <h1 className="display" style={{ maxWidth: '13ch' }}>
+            Vesting that doesn&rsquo;t publish your <span className="hl">cap table</span>.
           </h1>
           <p className="lead" style={{ maxWidth: '58ch' }}>
             Open a vesting stream on Starknet where the sender and the recipient are keys,
             not wallet addresses. The schedule is enforced on chain. Who is on either end
             of it never appears in the transaction.
           </p>
-          <div style={{ display: 'flex', gap: 'var(--s2)', flexWrap: 'wrap' }}>
+          <div className="row-actions">
             <Link href="/app/create" className="btn btn-primary">
               Open a stream
             </Link>
@@ -34,7 +34,7 @@ export default function Landing() {
       </section>
 
       <section className="band band-cream">
-        <div className="wrap stack" style={{ gap: 'var(--s5)' }}>
+        <div className="wrap stack stack-lg">
           <h2 style={{ maxWidth: '20ch' }}>
             Every other vesting contract names both parties, forever.
           </h2>
@@ -81,20 +81,20 @@ export default function Landing() {
       <section className="band band-cream">
         <div className="wrap stack">
           <h2>Before you fund anything</h2>
-          <dl className="rows" style={{ maxWidth: '72ch' }}>
+          <dl className="rows rows-plain rows-ink measure-72">
             {HONEST_LIMITS.map((line) => (
-              <div className="row" key={line} style={{ gridTemplateColumns: '1fr' }}>
-                <dt style={{ color: 'var(--ink)' }}>{line}</dt>
+              <div className="row" key={line}>
+                <dt>{line}</dt>
               </div>
             ))}
-            <div className="row" style={{ gridTemplateColumns: '1fr' }}>
-              <dt style={{ color: 'var(--ink)' }}>
+            <div className="row">
+              <dt>
                 Your keys live in this browser. There is no recovery: back them up, or a
                 lost key loses the stream.
               </dt>
             </div>
-            <div className="row" style={{ gridTemplateColumns: '1fr' }}>
-              <dt style={{ color: 'var(--ink)' }}>
+            <div className="row">
+              <dt>
                 The contract has no owner and no upgrade path, and it has not been
                 audited.{' '}
                 <a href={`${VOYAGER}/contract/${NAGARE_PADDED}`} target="_blank" rel="noreferrer">
@@ -109,8 +109,8 @@ export default function Landing() {
 
       </main>
 
-      <footer className="band" style={{ paddingTop: 'var(--s5)', paddingBottom: 'var(--s5)' }}>
-        <div className="wrap muted" style={{ display: 'flex', gap: 'var(--s3)', flexWrap: 'wrap' }}>
+      <footer className="band band-tight">
+        <div className="wrap muted footer-links">
           <span>Nagare</span>
           <a href="https://github.com/sneg55/nagare" target="_blank" rel="noreferrer">
             Source

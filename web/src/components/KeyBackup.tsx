@@ -39,14 +39,14 @@ export function KeyBackup() {
   }
 
   return (
-    <div className="card stack-tight" style={{ background: 'var(--cream)' }}>
+    <div className="card card-cream stack-tight">
       <h3>Your keys</h3>
       <p className="muted">
         {count === 0
           ? 'This browser holds no stream keys yet.'
           : `This browser holds ${count} ${count === 1 ? 'key' : 'keys'}. They exist nowhere else. Clearing your site data without a copy of this file makes every stream they control unreachable, by you or by anyone.`}
       </p>
-      <div style={{ display: 'flex', gap: 'var(--s2)', flexWrap: 'wrap' }}>
+      <div className="row-actions">
         <button className="btn btn-primary" onClick={download} disabled={count === 0}>
           Save a backup file
         </button>
@@ -55,23 +55,19 @@ export function KeyBackup() {
         </button>
       </div>
 
-      <h3 style={{ marginTop: 'var(--s2)' }}>Restore from a backup</h3>
+      <h3 className="spaced">Restore from a backup</h3>
       <p className="muted">
         Paste a backup file to add its keys to this browser. Keys already here are kept.
       </p>
-      <textarea
-        value={importing}
-        onChange={(e) => setImporting(e.target.value)}
-        rows={3}
-        placeholder='{"stream:1:recipient":…}'
-        style={{
-          font: 'inherit',
-          padding: 12,
-          border: '1px solid var(--fog)',
-          borderRadius: 'var(--r-ui)',
-          resize: 'vertical',
-        }}
-      />
+      <label className="field">
+        <span className="visually-hidden">Paste a backup file</span>
+        <textarea
+          value={importing}
+          onChange={(e) => setImporting(e.target.value)}
+          rows={3}
+          placeholder='{"stream:1:recipient":…}'
+        />
+      </label>
       <div>
         <button className="btn" onClick={restore} disabled={!importing.trim()}>
           Restore these keys

@@ -168,12 +168,12 @@ export function StreamDetail({ id }: { id: number }) {
 
   return (
     <section className="band">
-      <div className="wrap stack" style={{ gap: 'var(--s5)' }}>
+      <div className="wrap stack stack-lg">
         <div className="stack-tight">
-          <Link href="/app/streams" className="muted" style={{ textDecoration: 'none' }}>
+          <Link href="/app/streams" className="muted backlink">
             ← Your streams
           </Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s2)', flexWrap: 'wrap' }}>
+          <div className="row-actions align-center">
             <h1>Stream {id}</h1>
             <span className={status === 'vesting' ? 'badge badge-live' : 'badge'}>
               {STATUS_LABEL[status]}
@@ -183,7 +183,7 @@ export function StreamDetail({ id }: { id: number }) {
 
         <div className="detail-grid">
           <div className="stack">
-            <div className="card" style={{ background: 'var(--cream)' }}>
+            <div className="card card-cream">
               <div className="stack">
                 <div className="stack-tight">
                   <span className="muted">Available to withdraw now</span>
@@ -267,13 +267,17 @@ export function StreamDetail({ id }: { id: number }) {
                       ? 'A fresh key is ready in this browser. Moving the stream onto it means the person who sent you the claim link can no longer act as you.'
                       : 'Re-key this stream to a new holder. Your key stops working the moment it lands.'}
                   </p>
-                  <input
-                    value={newKey}
-                    onChange={(e) => setNewKey(e.target.value)}
-                    placeholder="Their Nagare key, 0x…"
-                    style={{ font: 'inherit', padding: 12, border: '1px solid var(--fog)', borderRadius: 'var(--r-ui)' }}
-                  />
-                  <div style={{ display: 'flex', gap: 'var(--s2)', flexWrap: 'wrap' }}>
+                  <label className="field">
+                    <span className="visually-hidden">
+                      {rekeyPending ? 'Your new Nagare key' : 'The new holder\u2019s Nagare key'}
+                    </span>
+                    <input
+                      value={newKey}
+                      onChange={(e) => setNewKey(e.target.value)}
+                      placeholder="Their Nagare key, 0x…"
+                    />
+                  </label>
+                  <div className="row-actions">
                     <button
                       className={rekeyPending ? 'btn btn-primary' : 'btn'}
                       onClick={runTransfer}

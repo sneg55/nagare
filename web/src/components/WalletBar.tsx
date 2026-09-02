@@ -21,23 +21,8 @@ export function WalletBar() {
   const warning = line()
 
   return (
-    <div
-      style={{
-        borderBottom: '1px solid var(--fog)',
-        background: warning ? 'var(--cream)' : 'transparent',
-      }}
-    >
-      <div
-        className="wrap"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 'var(--s3)',
-          padding: '12px var(--s5)',
-          flexWrap: 'wrap',
-        }}
-      >
+    <div className={warning ? 'walletbar walletbar-warning' : 'walletbar'}>
+      <div className="wrap split align-center walletbar-inner">
         <span className="muted">
           {conn
             ? warning ?? `${shortHex(conn.address)} · ${shielded !== null ? toStrk(shielded) : '—'} STRK shielded`
