@@ -56,6 +56,11 @@ Every operation is a STRK20 private transaction, and the pool charges a flat 6 S
 for each one, taken from the sender's shielded balance on top of the amount being moved.
 That fee is the pool's, not Nagare's.
 
+## Try it
+
+[nagare-6go.pages.dev](https://nagare-6go.pages.dev) reads mainnet directly. Browsing
+needs no wallet; opening or moving a stream needs Ready with STRK20 enabled.
+
 ## Deployment
 
 Live on Starknet mainnet, against the STRK20 pool at
