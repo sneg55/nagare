@@ -12,6 +12,7 @@ import {
   resolveNoteId,
   signPayout,
   OPEN_NOTE_PLACEHOLDER,
+  type PayoutParams,
 } from '@/lib/nagare/actions'
 import { getStream, streamCount, withdrawable, liability } from '@/lib/nagare/read'
 import { connectWallet, discoverWallets, type Connected } from '@/lib/nagare/wallet'
@@ -25,8 +26,8 @@ export default function Harness() {
   const [conn, setConn] = useState<Connected | null>(null)
   const [log, setLog] = useState<Line[]>([])
   const [amount, setAmount] = useState('1')
-  const [cliffMinutes, setCliffMinutes] = useState('5')
-  const [endMinutes, setEndMinutes] = useState('20')
+  const [cliffMinutes, setCliffMinutes] = useState('1')
+  const [endMinutes, setEndMinutes] = useState('120')
   const [streamId, setStreamId] = useState('1')
   const [busy, setBusy] = useState(false)
   const [registered, setRegistered] = useState<boolean | null>(null)
@@ -175,50 +176,49 @@ export default function Harness() {
       say('C is the shape Withdraw needs')
     })
 
-  const withdraw = () =>
-    guard('withdraw', async () => {
+  const runPayout = (op: 'Withdraw' | 'Cancel') =>
+    guard(op.toLowerCase(), async () => {
       if (!conn) throw new Error('connect first')
       const id = BigInt(streamId)
       const s = await getStream(id)
       if (!s.exists) throw new Error(`stream ${id} does not exist`)
-      const key = loadKey(`stream:${id}:recipient`)
-      if (!key) throw new Error(`no recipient key stored for stream ${id}`)
 
-      const due = await withdrawable(id)
-      say(`withdrawable: ${due.toString()}`)
-      if (due === 0n) throw new Error('nothing vested yet, wait for the cliff')
+      const role = op === 'Withdraw' ? 'recipient' : 'sender'
+      const key = loadKey(`stream:${id}:${role}`)
+      if (!key) throw new Error(`no ${role} key stored for stream ${id}`)
 
+      const now = Math.floor(Date.now() / 1000)
+      if (op === 'Withdraw') {
+        const due = await withdrawable(id)
+        say(`withdrawable: ${due.toString()}`)
+        if (due === 0n) throw new Error('nothing vested yet, wait for the cliff')
+      } else {
+        if (s.canceled) throw new Error('this stream is already canceled')
+        if (now >= s.end) {
+          throw new Error('this stream is fully vested, there is nothing unvested to refund')
+        }
+        const vested = now < s.cliff ? 0n : (s.total * BigInt(now - s.start)) / BigInt(s.end - s.start)
+        say(`refund would be about ${(s.total - vested).toString()} wei, vested stays with the recipient`)
+      }
+
+      const params: PayoutParams = { op, streamId: id, recipientAddress: conn.address }
       const probeOf = (sig?: [string, string]) =>
-        invokeCalldata({
-          op: 'Withdraw',
-          streamId: id,
-          noteId: OPEN_NOTE_PLACEHOLDER,
-          sig,
-        })
-      const dry = payoutActions({
-        op: 'Withdraw',
-        streamId: id,
-        recipientAddress: conn.address,
-      })
+        invokeCalldata({ op, streamId: id, noteId: OPEN_NOTE_PLACEHOLDER, sig })
+
       say('dry run 1: asking the wallet to resolve the open note id')
-      const prepared = await conn.wallet.strk20PrepareInvoke(dry, true)
+      const prepared = await conn.wallet.strk20PrepareInvoke(payoutActions(params), true)
       const noteId = resolveNoteId(prepared.call.calldata as string[], probeOf())
       say(`resolved note id ${noteId}`)
 
       const sig = signPayout(key.privateKey, {
         streamId: id,
-        op: 'Withdraw',
+        op,
         noteId,
         streamNonce: s.nonce,
       })
-      say(`signed with the recipient key over note ${noteId} and nonce ${s.nonce}`)
+      say(`signed with the ${role} key over note ${noteId} and nonce ${s.nonce}`)
 
-      const signed: WALLET_API.STRK20_ACTION[] = payoutActions({
-        op: 'Withdraw',
-        streamId: id,
-        recipientAddress: conn.address,
-        sig,
-      })
+      const signed: WALLET_API.STRK20_ACTION[] = payoutActions({ ...params, sig })
       say('dry run 2: confirming the note id did not move')
       const recheck = await conn.wallet.strk20PrepareInvoke(signed, true)
       const noteAgain = resolveNoteId(recheck.call.calldata as string[], probeOf(sig))
@@ -228,10 +228,13 @@ export default function Harness() {
         )
       }
 
-      say('submitting Withdraw')
+      say(`submitting ${op}`)
       const r = await conn.wallet.strk20InvokeTransaction(signed)
-      say('Withdraw submitted', r.transaction_hash)
+      say(`${op} submitted`, r.transaction_hash)
     })
+
+  const withdraw = () => runPayout('Withdraw')
+  const cancel = () => runPayout('Cancel')
 
   return (
     <main style={{ maxWidth: 900 }}>
@@ -305,6 +308,9 @@ export default function Harness() {
           </button>
           <button onClick={withdraw} disabled={busy || !conn} style={{ marginLeft: 8 }}>
             Withdraw
+          </button>
+          <button onClick={cancel} disabled={busy || !conn} style={{ marginLeft: 8 }}>
+            Cancel
           </button>
           <button onClick={diagnose} disabled={busy || !conn} style={{ marginLeft: 8 }}>
             Diagnose prepare
