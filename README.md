@@ -52,11 +52,25 @@ All eight run through `privacy_invoke`, callable only by the STRK20 pool.
 Vesting is linear from `start` to `end` with a `cliff` before which nothing is
 withdrawable, the same curve as Tokei's LockupLinear.
 
+## Deployment
+
+Live on Starknet mainnet, against the STRK20 pool at
+`0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a`, with STRK as the
+only admitted token.
+
+| | |
+|---|---|
+| Contract | [`0x00ae22ea6b8c2e10bb19450d4caac7d31c89168379e4aef02d83e3eb8f03e323`](https://voyager.online/contract/0x00ae22ea6b8c2e10bb19450d4caac7d31c89168379e4aef02d83e3eb8f03e323) |
+| Class hash | [`0x0015bbc96d70c0a295000cdbb433f00f258427e48eaaaa58fb2d864db898abb8`](https://voyager.online/class/0x0015bbc96d70c0a295000cdbb433f00f258427e48eaaaa58fb2d864db898abb8) |
+
+There is no owner, no pause and no upgrade path. A fix means a new class at a new
+address, and this table is how you tell which one you are looking at.
+
 ## Status
 
-Contract complete, 46 tests green under snforge, including a signature vector generated
+Contract deployed, 46 tests green under snforge, including a signature vector generated
 in TypeScript and verified in Cairo so the browser signer and the contract cannot drift.
-Mainnet deployment, the web client and the demo are in progress.
+The web client and the demo are in progress.
 
 Not audited.
 
