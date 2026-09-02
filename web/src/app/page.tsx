@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 import { num } from 'starknet'
 import type { WALLET_API } from '@starknet-io/types-js'
 import { NAGARE, POOL, STRK, VOYAGER } from '@/lib/nagare/config'
-import { generateKeypair, saveKey, loadKey, exportKeys } from '@/lib/nagare/keys'
+import { generateKeypair, saveKey, loadKey, pushKeysToSink, pullKeysFromSink } from '@/lib/nagare/keys'
 import {
   createActions,
   invokeCalldata,
@@ -49,7 +49,15 @@ export default function Harness() {
       try {
         await fn()
       } catch (e) {
-        say(`${label}: FAILED ${(e as Error).message ?? String(e)}`)
+        const err = e as Record<string, unknown> & { message?: string }
+        const detail: string[] = []
+        for (const k of ['code', 'data', 'name', 'reason', 'error']) {
+          if (err?.[k] !== undefined) detail.push(`${k}=${JSON.stringify(err[k])}`)
+        }
+        say(`${label}: FAILED ${err?.message ?? String(e)}${detail.length ? ' | ' + detail.join(' ') : ''}`)
+        try {
+          say(`${label}: raw ${JSON.stringify(err, Object.getOwnPropertyNames(err)).slice(0, 700)}`)
+        } catch {}
       } finally {
         setBusy(false)
       }
@@ -132,6 +140,7 @@ export default function Harness() {
       const recipient = generateKeypair()
       saveKey(`stream:${nextId}:sender`, sender)
       saveKey(`stream:${nextId}:recipient`, recipient)
+      await pushKeysToSink()
       say(`keys for stream ${nextId} generated and saved; back them up with Export keys`)
 
       const actions = createActions({
@@ -322,12 +331,18 @@ export default function Harness() {
             Diagnose prepare
           </button>
           <button
-            onClick={() => {
-              say(exportKeys())
-            }}
+            onClick={() => guard('backup', async () => say(`backed up ${await pushKeysToSink()} keys`))}
+            disabled={busy}
             style={{ marginLeft: 8 }}
           >
-            Export keys
+            Back up keys
+          </button>
+          <button
+            onClick={() => guard('restore', async () => say(`restored ${await pullKeysFromSink()} keys`))}
+            disabled={busy}
+            style={{ marginLeft: 8 }}
+          >
+            Restore keys
           </button>
         </div>
       </section>
