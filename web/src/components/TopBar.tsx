@@ -13,10 +13,10 @@ export function TopBar({ cta = true }: { cta?: boolean }) {
         <span>Nagare</span>
       </Link>
       <nav>
-        <Link href="/app/streams">Streams</Link>
+        <Link href="/app/schedules">Schedules</Link>
         {cta ? (
           <Link href="/app/create" className="btn">
-            New stream
+            New schedule
           </Link>
         ) : null}
       </nav>

@@ -23,7 +23,7 @@ export function ConnectGate({
           <h1>Connect a wallet to continue</h1>
           <p className="lead">
             Nagare runs entirely through the STRK20 privacy pool, which today means the
-            Ready wallet. Your wallet signs the pool transaction; the stream itself is
+            Ready wallet. Your wallet signs the pool transaction; the schedule itself is
             controlled by keys this browser holds.
           </p>
           <div>

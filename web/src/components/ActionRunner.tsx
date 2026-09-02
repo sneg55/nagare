@@ -124,7 +124,7 @@ export function ActionStatus({ phase, op, reset }: { phase: Phase; op: OpName; r
     phase.kind === 'preparing'
       ? 'Working out where the payment lands'
       : phase.kind === 'signing'
-        ? 'Signing with your stream key'
+        ? 'Signing with your schedule key'
         : 'Your wallet is building the privacy proof. This takes about 30 seconds.'
 
   return (

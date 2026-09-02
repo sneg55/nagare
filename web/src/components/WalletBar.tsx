@@ -26,7 +26,7 @@ export function WalletBar() {
         <span className="muted">
           {conn
             ? warning ?? `${shortHex(conn.address)} · ${shielded !== null ? toStrk(shielded) : '—'} STRK shielded`
-            : 'Browsing read-only. Connect a wallet to open or move a stream.'}
+            : 'Browsing read-only. Connect a wallet to open or move a schedule.'}
         </span>
         <button
           className="btn btn-quiet"

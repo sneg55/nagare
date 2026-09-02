@@ -43,8 +43,8 @@ export function KeyBackup() {
       <h3>Your keys</h3>
       <p className="muted">
         {count === 0
-          ? 'This browser holds no stream keys yet.'
-          : `This browser holds ${count} ${count === 1 ? 'key' : 'keys'}. They exist nowhere else. Clearing your site data without a copy of this file makes every stream they control unreachable, by you or by anyone.`}
+          ? 'This browser holds no schedule keys yet.'
+          : `This browser holds ${count} ${count === 1 ? 'key' : 'keys'}. They exist nowhere else. Clearing your site data without a copy of this file makes every schedule they control unreachable, by you or by anyone.`}
       </p>
       <div className="row-actions">
         <button className="btn btn-primary" onClick={download} disabled={count === 0}>

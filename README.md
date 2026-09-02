@@ -4,10 +4,10 @@ Private token vesting on Starknet. A sender funds a lockup from a shielded STRK2
 balance, the recipient withdraws what has vested into a private note, and no wallet
 address of either party appears in any Nagare transaction.
 
-Nagare is a STRK20 anonymizer. The sender and the recipient of a stream are Stark-curve
+Nagare is a STRK20 anonymizer. The sender and the recipient of a schedule are Stark-curve
 public keys generated in the browser, not wallet addresses, and every withdrawal,
 cancellation, re-key and sale is an ECDSA signature over the operation, bound to the
-chain, the contract, the stream, the note being paid into and a nonce.
+chain, the contract, the schedule, the note being paid into and a nonce.
 
 ## Why keys instead of addresses
 
@@ -20,16 +20,16 @@ and Nagare pays the pool, so the graph between sender and recipient is never dra
 
 | Not disclosed on-chain | Disclosed on-chain |
 |---|---|
-| The wallet address that funded a stream | Each stream's total, token, start, cliff, end, and its id |
-| The wallet address that receives it | The sender key and recipient key of every stream (pseudonyms), and every re-key |
+| The wallet address that funded a schedule | Each schedule's total, token, start, cliff, end, and its id |
+| The wallet address that receives it | The sender key and recipient key of every schedule (pseudonyms), and every re-key |
 | The wallet address that canceled, transferred, listed, offered or accepted | Nagare's STRK balance and per-token liability |
 | Which wallet owns the open note a payout lands in | Each withdrawal's, refund's and sale's amount and time |
-| | Whether a stream is listed for sale, and every offer's price, expiry and buyer key |
+| | Whether a schedule is listed for sale, and every offer's price, expiry and buyer key |
 | | Every signature and every calldata item, including note ids |
 
 The word is disclosed, not hidden. Amounts, schedules and timing are public. A
 distinctive amount withdrawn shortly after a distinctive shield can be correlated. A key
-reused across streams links those streams, which is why sender keys are per stream.
+reused across schedules links those schedules, which is why sender keys are per schedule.
 Shielding itself publishes the depositor's address and the amount. The exact claim is
 that no wallet address of either party appears in any Nagare transaction, and that is
 the only claim.
@@ -40,17 +40,21 @@ All eight run through `privacy_invoke`, callable only by the STRK20 pool.
 
 | Op | Who signs | What it does |
 |---|---|---|
-| Create | nobody (the pool's withdraw is the authorization) | Opens a stream from a shielded balance |
+| Create | nobody (the pool's withdraw is the authorization) | Opens a schedule from a shielded balance |
 | Withdraw | recipient key | Pays the vested, unwithdrawn amount into an open note |
 | Cancel | sender key | Refunds the unvested part; the vested part stays claimable |
 | Transfer | recipient key | Re-keys the position to a new holder |
-| List | recipient key | Opens or closes the stream to offers |
-| Offer | nobody (the buyer's escrow is the authorization) | Escrows a price against a listed stream |
+| List | recipient key | Opens or closes the schedule to offers |
+| Offer | nobody (the buyer's escrow is the authorization) | Escrows a price against a listed schedule |
 | Accept | recipient key | Re-keys to the buyer and pays the price into the seller's note |
 | Reclaim | buyer key | Returns an unaccepted escrow to the buyer |
 
 Vesting is linear from `start` to `end` with a `cliff` before which nothing is
 withdrawable, the same curve as Tokei's LockupLinear.
+
+The contract's ABI calls a schedule a stream, in `get_stream`, `stream_count` and every
+`stream_id` argument. It is deployed with no upgrade path, so those names are fixed;
+everything a person reads says schedule.
 
 Every operation is a STRK20 private transaction, and the pool charges a flat 6 STRK fee
 for each one, taken from the sender's shielded balance on top of the amount being moved.
@@ -59,7 +63,7 @@ That fee is the pool's, not Nagare's.
 ## Try it
 
 [nagare-6go.pages.dev](https://nagare-6go.pages.dev) reads mainnet directly. Browsing
-needs no wallet; opening or moving a stream needs Ready with STRK20 enabled.
+needs no wallet; opening or moving a schedule needs Ready with STRK20 enabled.
 
 ## Deployment
 

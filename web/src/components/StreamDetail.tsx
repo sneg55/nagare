@@ -29,7 +29,7 @@ import { SalePanel } from './SalePanel'
 export function StreamDetail({ id }: { id: number }) {
   const { conn, prepare } = useWallet()
   const valid = Number.isInteger(id) && id > 0
-  const [stream, setStream] = useState<Stream | null>(null)
+  const [schedule, setSchedule] = useState<Stream | null>(null)
   const [offer, setOffer] = useState<Offer | null>(null)
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000))
   const [newKey, setNewKey] = useState('')
@@ -46,7 +46,7 @@ export function StreamDetail({ id }: { id: number }) {
   const load = useCallback(async () => {
     if (!valid) return
     const [s, o] = await Promise.all([getStream(id), getOffer(id)])
-    setStream(s)
+    setSchedule(s)
     setOffer(o)
     if (s.exists) watch(id)
   }, [id, valid])
@@ -66,14 +66,14 @@ export function StreamDetail({ id }: { id: number }) {
     return (
       <section className="band">
         <div className="narrow stack">
-          <h1>That is not a stream id</h1>
+          <h1>That is not a schedule id</h1>
           <p className="lead">
             Stream ids are whole numbers counting up from 1. Check the link you followed,
-            or find the stream in your list.
+            or find the schedule in your list.
           </p>
           <div>
-            <Link href="/app/streams" className="btn">
-              Back to your streams
+            <Link href="/app/schedules" className="btn">
+              Back to your schedules
             </Link>
           </div>
         </div>
@@ -81,25 +81,25 @@ export function StreamDetail({ id }: { id: number }) {
     )
   }
 
-  if (!stream) {
+  if (!schedule) {
     return (
       <section className="band">
-        <div className="wrap muted">Reading stream {id} from the contract…</div>
+        <div className="wrap muted">Reading schedule {id} from the contract…</div>
       </section>
     )
   }
 
-  if (!stream.exists) {
+  if (!schedule.exists) {
     return (
       <section className="band">
         <div className="narrow stack">
-          <h1>No stream {id}</h1>
+          <h1>No schedule {id}</h1>
           <p className="lead">
-            The contract has no stream with that id. Check the number, or ask whoever sent
+            The contract has no schedule with that id. Check the number, or ask whoever sent
             it to you.
           </p>
-          <Link href="/app/streams" className="btn">
-            Back to your streams
+          <Link href="/app/schedules" className="btn">
+            Back to your schedules
           </Link>
         </div>
       </section>
@@ -109,35 +109,35 @@ export function StreamDetail({ id }: { id: number }) {
   const senderKey = loadKey(`stream:${id}:sender`)
   const recipientKey = loadKey(`stream:${id}:recipient`)
   const isRecipient =
-    !!recipientKey && BigInt(publicKeyOf(recipientKey.privateKey)) === BigInt(stream.recipientPk)
-  const isSender = !!senderKey && BigInt(publicKeyOf(senderKey.privateKey)) === BigInt(stream.senderPk)
+    !!recipientKey && BigInt(publicKeyOf(recipientKey.privateKey)) === BigInt(schedule.recipientPk)
+  const isSender = !!senderKey && BigInt(publicKeyOf(senderKey.privateKey)) === BigInt(schedule.senderPk)
   const movedOn = !!recipientKey && !isRecipient
 
-  const status = statusOf(stream, now)
-  const due = withdrawableAt(stream, now)
+  const status = statusOf(schedule, now)
+  const due = withdrawableAt(schedule, now)
   const offerStatus = offer ? offerStatusOf(offer, now) : 'none'
 
   const runWithdraw = () =>
     void withdraw.run(async () => {
-      if (!conn || !recipientKey) throw new Error('You do not hold the recipient key for this stream.')
+      if (!conn || !recipientKey) throw new Error('You do not hold the recipient key for this schedule.')
       return {
         streamId: String(id),
-        actions: await buildPayout('Withdraw', stream, id, recipientKey.privateKey, conn.address, prepare),
+        actions: await buildPayout('Withdraw', schedule, id, recipientKey.privateKey, conn.address, prepare),
       }
     })
 
   const runCancel = () =>
     void cancel.run(async () => {
-      if (!conn || !senderKey) throw new Error('You do not hold the sender key for this stream.')
+      if (!conn || !senderKey) throw new Error('You do not hold the sender key for this schedule.')
       return {
         streamId: String(id),
-        actions: await buildPayout('Cancel', stream, id, senderKey.privateKey, conn.address, prepare),
+        actions: await buildPayout('Cancel', schedule, id, senderKey.privateKey, conn.address, prepare),
       }
     })
 
   const runTransfer = () =>
     void transfer.run(async () => {
-      if (!recipientKey) throw new Error('You do not hold the recipient key for this stream.')
+      if (!recipientKey) throw new Error('You do not hold the recipient key for this schedule.')
       const target = newKey.trim()
       if (!/^0x[0-9a-fA-F]{1,63}$/.test(target)) throw new Error('That does not look like a Nagare key.')
       if (rekeyPending && BigInt(target) === BigInt(rekeyPending.publicKey)) {
@@ -148,20 +148,20 @@ export function StreamDetail({ id }: { id: number }) {
         streamId: id,
         op: 'Transfer',
         arg: target,
-        streamNonce: stream.nonce,
+        streamNonce: schedule.nonce,
       })
       return { streamId: String(id), actions: keyedActions('Transfer', id, target, sig) }
     })
 
   const runList = (enable: boolean) =>
     void list.run(async () => {
-      if (!recipientKey) throw new Error('You do not hold the recipient key for this stream.')
+      if (!recipientKey) throw new Error('You do not hold the recipient key for this schedule.')
       const arg = enable ? 1 : 0
       const sig = signKeyed(recipientKey.privateKey, {
         streamId: id,
         op: 'List',
         arg,
-        streamNonce: stream.nonce,
+        streamNonce: schedule.nonce,
       })
       return { streamId: String(id), actions: keyedActions('List', id, arg, sig) }
     })
@@ -170,11 +170,11 @@ export function StreamDetail({ id }: { id: number }) {
     <section className="band">
       <div className="wrap stack stack-lg">
         <div className="stack-tight">
-          <Link href="/app/streams" className="muted backlink">
-            ← Your streams
+          <Link href="/app/schedules" className="muted backlink">
+            ← Your schedules
           </Link>
           <div className="row-actions align-center">
-            <h1>Stream {id}</h1>
+            <h1>Schedule {id}</h1>
             <span className={status === 'vesting' ? 'badge badge-live' : 'badge'}>
               {STATUS_LABEL[status]}
             </span>
@@ -189,32 +189,32 @@ export function StreamDetail({ id }: { id: number }) {
                   <span className="muted">Available to withdraw now</span>
                   <p className="amount amount-lg">{toStrk(due)} STRK</p>
                 </div>
-                <Meter withdrawn={progress(stream, now)} claimable={claimableFraction(stream, now)} label="Vesting progress" />
+                <Meter withdrawn={progress(schedule, now)} claimable={claimableFraction(schedule, now)} label="Vesting progress" />
                 <dl className="rows">
                   <div className="row">
                     <dt>Total</dt>
-                    <dd>{toStrk(stream.total)} STRK</dd>
+                    <dd>{toStrk(schedule.total)} STRK</dd>
                   </div>
                   <div className="row">
                     <dt>Already withdrawn</dt>
-                    <dd>{toStrk(stream.withdrawn)} STRK</dd>
+                    <dd>{toStrk(schedule.withdrawn)} STRK</dd>
                   </div>
-                  {stream.canceled ? (
+                  {schedule.canceled ? (
                     <div className="row">
                       <dt>Refunded on cancel</dt>
-                      <dd>{toStrk(stream.refunded)} STRK</dd>
+                      <dd>{toStrk(schedule.refunded)} STRK</dd>
                     </div>
                   ) : null}
                   <div className="row">
                     <dt>Cliff</dt>
                     <dd>
-                      {when(stream.cliff)} <span className="muted">({until(stream.cliff, now)})</span>
+                      {when(schedule.cliff)} <span className="muted">({until(schedule.cliff, now)})</span>
                     </dd>
                   </div>
                   <div className="row">
                     <dt>Fully vested</dt>
                     <dd>
-                      {when(stream.end)} <span className="muted">({until(stream.end, now)})</span>
+                      {when(schedule.end)} <span className="muted">({until(schedule.end, now)})</span>
                     </dd>
                   </div>
                 </dl>
@@ -228,7 +228,7 @@ export function StreamDetail({ id }: { id: number }) {
 
             {movedOn ? (
               <div className="card card-outlined stack-tight">
-                <h3>This stream moved to another key</h3>
+                <h3>This schedule moved to another key</h3>
                 <p className="muted">
                   The key this browser holds no longer controls it. It is kept here for
                   your records.
@@ -253,19 +253,19 @@ export function StreamDetail({ id }: { id: number }) {
                   </div>
                 ) : (
                   <p className="muted">
-                    {now < stream.cliff
-                      ? `Nothing has vested yet. The cliff is ${until(stream.cliff, now)}.`
+                    {now < schedule.cliff
+                      ? `Nothing has vested yet. The cliff is ${until(schedule.cliff, now)}.`
                       : 'You have withdrawn everything available so far.'}
                   </p>
                 )}
 
-                {canTransfer(stream, now, offer!) || canList(stream, now) ? (
+                {canTransfer(schedule, now, offer!) || canList(schedule, now) ? (
                 <div className="stack-tight">
                   <h3>{rekeyPending ? 'Take control with your own key' : 'Hand it to someone else'}</h3>
                   <p className="muted">
                     {rekeyPending
-                      ? 'A fresh key is ready in this browser. Moving the stream onto it means the person who sent you the claim link can no longer act as you.'
-                      : 'Re-key this stream to a new holder. Your key stops working the moment it lands.'}
+                      ? 'A fresh key is ready in this browser. Moving the schedule onto it means the person who sent you the claim link can no longer act as you.'
+                      : 'Re-key this schedule to a new holder. Your key stops working the moment it lands.'}
                   </p>
                   <label className="field">
                     <span className="visually-hidden">
@@ -281,16 +281,16 @@ export function StreamDetail({ id }: { id: number }) {
                     <button
                       className={rekeyPending ? 'btn btn-primary' : 'btn'}
                       onClick={runTransfer}
-                      disabled={!canTransfer(stream, now, offer!)}
+                      disabled={!canTransfer(schedule, now, offer!)}
                     >
-                      {rekeyPending ? 'Move it onto my key' : 'Transfer this stream'}
+                      {rekeyPending ? 'Move it onto my key' : 'Transfer this schedule'}
                     </button>
                     <button
                       className="btn btn-quiet"
-                      onClick={() => runList(!stream.sellable)}
-                      disabled={!canList(stream, now)}
+                      onClick={() => runList(!schedule.sellable)}
+                      disabled={!canList(schedule, now)}
                     >
-                      {stream.sellable ? 'Take it off the market' : 'Open it to offers'}
+                      {schedule.sellable ? 'Take it off the market' : 'Open it to offers'}
                     </button>
                   </div>
                   {offerStatus === 'live' ? (
@@ -306,24 +306,24 @@ export function StreamDetail({ id }: { id: number }) {
             {isSender ? (
               <div className="card card-outlined stack-tight">
                 <h3>You are the sender</h3>
-                {canCancel(stream, now) ? (
+                {canCancel(schedule, now) ? (
                   <>
                     <p className="muted">
-                      Cancelling returns {toStrk(refundIfCanceledNow(stream, now))} STRK to
-                      you privately. The {toStrk(stream.total - refundIfCanceledNow(stream, now) - stream.withdrawn)}{' '}
+                      Cancelling returns {toStrk(refundIfCanceledNow(schedule, now))} STRK to
+                      you privately. The {toStrk(schedule.total - refundIfCanceledNow(schedule, now) - schedule.withdrawn)}{' '}
                       STRK already vested stays claimable by the recipient.
                     </p>
                     <div>
                       <button className="btn" onClick={runCancel}>
-                        Cancel this stream
+                        Cancel this schedule
                       </button>
                     </div>
                   </>
                 ) : (
                   <p className="muted">
-                    {stream.canceled
-                      ? 'You already cancelled this stream.'
-                      : 'This stream is fully vested, so there is nothing left to cancel.'}
+                    {schedule.canceled
+                      ? 'You already cancelled this schedule.'
+                      : 'This schedule is fully vested, so there is nothing left to cancel.'}
                   </p>
                 )}
               </div>
@@ -332,24 +332,24 @@ export function StreamDetail({ id }: { id: number }) {
 
           <aside className="stack">
             <div className="card card-outlined stack-tight">
-              <h3>What this stream shows publicly</h3>
+              <h3>What this schedule shows publicly</h3>
               <dl className="rows">
                 <div className="row">
                   <dt>Sender key</dt>
-                  <dd>{shortHex(stream.senderPk)}</dd>
+                  <dd>{shortHex(schedule.senderPk)}</dd>
                 </div>
                 <div className="row">
                   <dt>Recipient key</dt>
-                  <dd>{shortHex(stream.recipientPk)}</dd>
+                  <dd>{shortHex(schedule.recipientPk)}</dd>
                 </div>
                 <div className="row">
                   <dt>Open to offers</dt>
-                  <dd>{stream.sellable ? 'Yes' : 'No'}</dd>
+                  <dd>{schedule.sellable ? 'Yes' : 'No'}</dd>
                 </div>
               </dl>
               <p className="muted">
                 These are keys, not wallets. No address of either party appears in any
-                transaction on this stream.
+                transaction on this schedule.
               </p>
               <p>
                 <a href={`${VOYAGER}/contract/${NAGARE_PADDED}`} target="_blank" rel="noreferrer">
@@ -360,7 +360,7 @@ export function StreamDetail({ id }: { id: number }) {
             {offer ? (
               <SalePanel
                 id={id}
-                stream={stream}
+                schedule={schedule}
                 offer={offer}
                 now={now}
                 isRecipient={isRecipient}

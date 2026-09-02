@@ -38,13 +38,13 @@ export default function CreatePage() {
       if (total <= 0n) throw new Error('Enter how much STRK to vest.')
       if (shielded !== null && total + POOL_FEE > shielded) {
         throw new Error(
-          `You have ${toStrk(shielded)} STRK shielded. This stream needs ${toStrk(total)} plus a ${toStrk(POOL_FEE)} STRK pool fee.`,
+          `You have ${toStrk(shielded)} STRK shielded. This schedule needs ${toStrk(total)} plus a ${toStrk(POOL_FEE)} STRK pool fee.`,
         )
       }
       const cliffD = Number(cliffDays)
       const endD = Number(endDays)
       if (!(cliffD >= 0 && endD > cliffD)) {
-        throw new Error('The stream has to end after its cliff.')
+        throw new Error('The schedule has to end after its cliff.')
       }
 
       const now = Math.floor(Date.now() / 1000)
@@ -83,7 +83,7 @@ export default function CreatePage() {
     <section className="band">
       <div className="narrow stack stack-lg">
         <div className="stack-tight">
-          <h1>Open a stream</h1>
+          <h1>Open a schedule</h1>
           <p className="lead">
             The amount leaves your shielded balance now and unlocks to the recipient on
             the schedule you set. You can cancel anything that has not vested.
@@ -138,7 +138,7 @@ export default function CreatePage() {
               <p className="muted">
                 We will make the recipient&rsquo;s key here and give you a link that carries
                 it. Send that link over a channel you trust: anyone holding it controls
-                the stream until the recipient re-keys.
+                the schedule until the recipient re-keys.
               </p>
             )}
           </div>
@@ -166,13 +166,13 @@ export default function CreatePage() {
 
           <p className="muted">
             The recipient&rsquo;s key is generated in this browser and stored only here.
-            There is no recovery: back it up from your streams page once the stream
-            exists, or losing this browser loses the stream.
+            There is no recovery: back it up from your schedules page once this one
+            exists, or losing this browser loses it.
           </p>
 
           <div>
             <button className="btn btn-primary" onClick={submit} disabled={busy || !conn}>
-              {conn ? 'Fund this stream' : 'Connect a wallet to fund'}
+              {conn ? 'Fund this schedule' : 'Connect a wallet to fund'}
             </button>
           </div>
         </div>
@@ -194,8 +194,8 @@ export default function CreatePage() {
               <button className="btn" onClick={() => void navigator.clipboard.writeText(link)}>
                 Copy link
               </button>
-              <button className="btn btn-quiet" onClick={() => router.push('/app/streams')}>
-                Go to your streams
+              <button className="btn btn-quiet" onClick={() => router.push('/app/schedules')}>
+                Go to your schedules
               </button>
             </div>
           </div>

@@ -17,16 +17,16 @@ export default function Landing() {
             Vesting that doesn&rsquo;t publish your <span className="hl">cap table</span>.
           </h1>
           <p className="lead" style={{ maxWidth: '58ch' }}>
-            Open a vesting stream on Starknet where the sender and the recipient are keys,
-            not wallet addresses. The schedule is enforced on chain. Who is on either end
-            of it never appears in the transaction.
+            Open a vesting schedule on Starknet where the sender and the recipient are keys,
+            not wallet addresses. The unlock is enforced on chain. Who is on either end of
+            it never appears in the transaction.
           </p>
           <div className="row-actions">
             <Link href="/app/create" className="btn btn-primary">
-              Open a stream
+              Open a schedule
             </Link>
-            <Link href="/app/streams" className="btn">
-              See your streams
+            <Link href="/app/schedules" className="btn">
+              See your schedules
             </Link>
           </div>
           <PoolStats />
@@ -60,7 +60,7 @@ export default function Landing() {
               },
               {
                 t: 'Hand the position over',
-                d: 'Re-key a stream to a new holder, or list it and sell it. The escrow settles in one transaction.',
+                d: 'Re-key a schedule to a new holder, or list it and sell it. The escrow settles in one transaction.',
               },
             ].map((c) => (
               <article className="card stack-tight" key={c.t}>
@@ -90,7 +90,7 @@ export default function Landing() {
             <div className="row">
               <dt>
                 Your keys live in this browser. There is no recovery: back them up, or a
-                lost key loses the stream.
+                lost key loses the schedule.
               </dt>
             </div>
             <div className="row">

@@ -13,14 +13,14 @@ import { useAction, ActionStatus } from './ActionRunner'
 
 export function SalePanel({
   id,
-  stream,
+  schedule,
   offer,
   now,
   isRecipient,
   onDone,
 }: {
   id: number
-  stream: Stream
+  schedule: Stream
   offer: Offer
   now: number
   isRecipient: boolean
@@ -58,12 +58,12 @@ export function SalePanel({
   const runAccept = () =>
     void accept.run(async () => {
       const key = loadKey(`stream:${id}:recipient`)
-      if (!conn || !key) throw new Error('You do not hold the recipient key for this stream.')
+      if (!conn || !key) throw new Error('You do not hold the recipient key for this schedule.')
       return {
         streamId: String(id),
         actions: await buildPayout(
           'Accept',
-          stream,
+          schedule,
           id,
           key.privateKey,
           conn.address,
@@ -80,7 +80,7 @@ export function SalePanel({
         streamId: String(id),
         actions: await buildPayout(
           'Reclaim',
-          stream,
+          schedule,
           id,
           buyerKey.privateKey,
           conn.address,
@@ -90,12 +90,12 @@ export function SalePanel({
       }
     })
 
-  if (!stream.sellable && status !== 'live') {
+  if (!schedule.sellable && status !== 'live') {
     return isRecipient ? null : (
       <div className="card card-outlined stack-tight">
         <h3>Not for sale</h3>
         <p className="muted">
-          The holder has not opened this stream to offers. Only they can change that.
+          The holder has not opened this schedule to offers. Only they can change that.
         </p>
       </div>
     )
@@ -103,7 +103,7 @@ export function SalePanel({
 
   return (
     <div className="card card-outlined stack">
-      <h3>{status === 'live' ? 'There is an offer on this stream' : 'Buy this position'}</h3>
+      <h3>{status === 'live' ? 'There is an offer on this schedule' : 'Buy this position'}</h3>
 
       <ActionStatus phase={makeOffer.phase} op="Offer" reset={makeOffer.reset} />
       <ActionStatus phase={accept.phase} op="Accept" reset={accept.reset} />
@@ -164,7 +164,7 @@ export function SalePanel({
         </div>
       ) : null}
 
-      {status !== 'live' && !isRecipient && canList(stream, now) ? (
+      {status !== 'live' && !isRecipient && canList(schedule, now) ? (
         <div className="stack-tight">
           <p className="muted">
             Offering escrows your STRK in the contract now. If the holder accepts, the
@@ -190,7 +190,7 @@ export function SalePanel({
 
       {status !== 'live' && isRecipient ? (
         <p className="muted">
-          This stream is open to offers. Anyone holding its id can escrow a price against
+          This schedule is open to offers. Anyone holding its id can escrow a price against
           it, and you decide whether to take it.
         </p>
       ) : null}

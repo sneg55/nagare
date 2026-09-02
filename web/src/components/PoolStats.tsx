@@ -23,7 +23,7 @@ export function PoolStats() {
 
   return (
     <p className="muted">
-      {stats.streams} {stats.streams === 1 ? 'stream' : 'streams'} opened, holding{' '}
+      {stats.streams} {stats.streams === 1 ? 'schedule' : 'schedules'} opened, holding{' '}
       {toStrk(stats.locked, 2)} STRK on mainnet right now.
     </p>
   )

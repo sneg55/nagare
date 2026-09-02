@@ -87,7 +87,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (held && held.op === op && held.streamId === streamId) {
         const age = Math.round((Date.now() - held.at) / 1000)
         throw new Error(
-          `${op} for this stream went to your wallet ${age}s ago and has not come back. Approve or reject it there, then try again. Nothing new was sent.`,
+          `${op} for this schedule went to your wallet ${age}s ago and has not come back. Approve or reject it there, then try again. Nothing new was sent.`,
         )
       }
       writeInFlight({ op, streamId, at: Date.now() })

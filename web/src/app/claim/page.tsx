@@ -13,7 +13,7 @@ type State =
   | { kind: 'reading' }
   | { kind: 'loading'; streamId: number }
   | { kind: 'bad' }
-  | { kind: 'ready'; streamId: number; stream: Stream; mine: boolean }
+  | { kind: 'ready'; streamId: number; schedule: Stream; mine: boolean }
 
 export default function ClaimPage() {
   const [state, setState] = useState<State>({ kind: 'reading' })
@@ -27,18 +27,18 @@ export default function ClaimPage() {
     const { streamId, privateKey } = parsed
     setState({ kind: 'loading', streamId })
     void (async () => {
-      const stream = await getStream(streamId)
-      if (!stream.exists) {
+      const schedule = await getStream(streamId)
+      if (!schedule.exists) {
         setState({ kind: 'bad' })
         return
       }
-      const mine = BigInt(publicKeyOf(privateKey)) === BigInt(stream.recipientPk)
+      const mine = BigInt(publicKeyOf(privateKey)) === BigInt(schedule.recipientPk)
       if (mine) {
         saveKey(`stream:${streamId}:recipient`, { privateKey, publicKey: publicKeyOf(privateKey) })
         watch(streamId)
       }
       history.replaceState(null, '', window.location.pathname)
-      setState({ kind: 'ready', streamId, stream, mine })
+      setState({ kind: 'ready', streamId, schedule, mine })
     })()
   }, [])
 
@@ -48,10 +48,10 @@ export default function ClaimPage() {
       <TopBar cta={false} />
       <main id="content" className="band">
         <div className="narrow stack">
-          <h1>Opening your stream</h1>
+          <h1>Opening your schedule</h1>
           <p className="lead">
             {state.kind === 'loading'
-              ? `Reading stream ${state.streamId} from Starknet. This takes a few seconds.`
+              ? `Reading schedule ${state.streamId} from Starknet. This takes a few seconds.`
               : 'Checking the link.'}
           </p>
         </div>
@@ -66,9 +66,9 @@ export default function ClaimPage() {
       <TopBar cta={false} />
       <main id="content" className="band">
         <div className="narrow stack">
-          <h1>That link does not open a stream</h1>
+          <h1>That link does not open a schedule</h1>
           <p className="lead">
-            It may have been cut short in transit, or the stream it points at was never
+            It may have been cut short in transit, or the schedule it points at was never
             funded. Ask the sender for a fresh one.
           </p>
         </div>
@@ -77,7 +77,7 @@ export default function ClaimPage() {
     )
   }
 
-  const { streamId, stream, mine } = state
+  const { streamId, schedule, mine } = state
 
   if (!mine) {
     return (
@@ -85,13 +85,13 @@ export default function ClaimPage() {
       <TopBar cta={false} />
       <main id="content" className="band">
         <div className="narrow stack">
-          <h1>This stream has already moved on</h1>
+          <h1>This schedule has already moved on</h1>
           <p className="lead">
-            The key in this link no longer controls stream {streamId}. Whoever received it
+            The key in this link no longer controls schedule {streamId}. Whoever received it
             has re-keyed, which is what a claim link is supposed to make possible.
           </p>
-          <Link href="/app/streams" className="btn">
-            Go to your streams
+          <Link href="/app/schedules" className="btn">
+            Go to your schedules
           </Link>
         </div>
       </main>
@@ -105,10 +105,10 @@ export default function ClaimPage() {
     <main id="content" className="band">
       <div className="narrow stack stack-lg">
         <div className="stack-tight">
-          <h1>{toStrk(stream.total)} STRK is vesting to you</h1>
+          <h1>{toStrk(schedule.total)} STRK is vesting to you</h1>
           <p className="lead">
-            Stream {streamId} unlocks from {when(stream.cliff)} and finishes{' '}
-            {when(stream.end)}. The key from this link is now saved in this browser.
+            Schedule {streamId} unlocks from {when(schedule.cliff)} and finishes{' '}
+            {when(schedule.end)}. The key from this link is now saved in this browser.
           </p>
         </div>
 
@@ -122,17 +122,17 @@ export default function ClaimPage() {
             </p>
             <p className="muted">
               Nothing forces you to. If you trust the sender and want to leave it, the
-              stream still pays out to this key.
+              schedule still pays out to this key.
             </p>
             <div className="row-actions">
-              <Link href={`/app/streams/${streamId}`} className="btn btn-primary">
-                Open the stream
+              <Link href={`/app/schedules/${streamId}`} className="btn btn-primary">
+                Open the schedule
               </Link>
               <button
                 className="btn"
                 onClick={() => {
                   saveKey(`stream:${streamId}:rekey-target`, generateKeypair())
-                  window.location.href = `/app/streams/${streamId}`
+                  window.location.href = `/app/schedules/${streamId}`
                 }}
               >
                 Make me a fresh key
@@ -145,7 +145,7 @@ export default function ClaimPage() {
           <h3>Back this key up now</h3>
           <p className="muted">
             It lives only in this browser and there is no recovery. Clear your site data
-            without a backup and the stream is unreachable, by you or anyone.
+            without a backup and the schedule is unreachable, by you or anyone.
           </p>
         </div>
       </div>
