@@ -62,7 +62,7 @@ export default function StreamsPage() {
 
         {rows.length === 0 ? (
           <div className="card card-outlined stack-tight">
-            <h3>Nothing here yet</h3>
+            <h2>Nothing here yet</h2>
             <p className="muted">
               Open a stream to vest tokens to someone, or add one by its id if you were
               given it.
@@ -108,19 +108,22 @@ export default function StreamsPage() {
         <KeyBackup />
 
         <div className="card stack-tight" style={{ background: 'var(--cream)' }}>
-          <h3>Add a stream by id</h3>
+          <h2>Add a stream by id</h2>
           <p className="muted">
             If someone gave you a stream id, put it here to watch it. You will need the
             matching key to do anything with it.
           </p>
           <div style={{ display: 'flex', gap: 'var(--s2)', flexWrap: 'wrap' }}>
-            <input
-              value={addId}
-              onChange={(e) => setAddId(e.target.value)}
-              inputMode="numeric"
-              placeholder="12"
-              style={{ font: 'inherit', padding: 12, border: '1px solid var(--fog)', borderRadius: 'var(--r-ui)', width: 120 }}
-            />
+            <label className="field" style={{ width: 120 }}>
+              <span className="visually-hidden">Stream id</span>
+              <input
+                value={addId}
+                onChange={(e) => setAddId(e.target.value)}
+                inputMode="numeric"
+                placeholder="12"
+                aria-label="Stream id"
+              />
+            </label>
             <button
               className="btn"
               onClick={() => {

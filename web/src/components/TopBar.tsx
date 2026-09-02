@@ -3,6 +3,10 @@ import { Mark } from './Mark'
 
 export function TopBar({ cta = true }: { cta?: boolean }) {
   return (
+    <>
+    <a href="#content" className="skip">
+      Skip to content
+    </a>
     <header className="topbar">
       <Link href="/" className="wordmark" aria-label="Nagare, home">
         <Mark />
@@ -17,5 +21,6 @@ export function TopBar({ cta = true }: { cta?: boolean }) {
         ) : null}
       </nav>
     </header>
+    </>
   )
 }

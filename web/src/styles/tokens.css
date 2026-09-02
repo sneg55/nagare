@@ -4,6 +4,7 @@
   --ink: #28262a;
   --graphite: #4a4a4c;
   --fog: #dddcdd;
+  --edge: #8a8a8c;
   --sky: #97cde5;
   --sage: #c8dfaa;
 
@@ -297,12 +298,13 @@ button:disabled {
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   font: inherit;
   letter-spacing: inherit;
   color: var(--ink);
   background: var(--paper);
-  border: 1px solid var(--fog);
+  border: 1px solid var(--edge);
   border-radius: var(--r-ui);
   padding: 12px 14px;
   width: 100%;
@@ -350,6 +352,13 @@ button:disabled {
   gap: var(--s3);
 }
 
+.topbar nav a,
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
 .wordmark {
   display: inline-flex;
   align-items: center;
@@ -358,6 +367,33 @@ button:disabled {
   font-size: 22px;
   letter-spacing: -0.02em;
   text-decoration: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 10;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 12px 20px;
+  border-radius: 0 0 var(--r-ui) 0;
+  text-decoration: none;
+}
+
+.skip:focus {
+  left: 0;
 }
 
 .hl {
@@ -389,8 +425,12 @@ button:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-property: color, background-color, border-color, opacity !important;
+    scroll-behavior: auto !important;
   }
 }

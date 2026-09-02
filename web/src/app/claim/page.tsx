@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { TopBar } from '@/components/TopBar'
 import { parseClaim } from '@/lib/nagare/claim'
 import { saveKey, publicKeyOf, generateKeypair } from '@/lib/nagare/keys'
 import { getStream, type Stream } from '@/lib/nagare/read'
@@ -43,7 +44,9 @@ export default function ClaimPage() {
 
   if (state.kind === 'reading' || state.kind === 'loading') {
     return (
-      <section className="band">
+      <>
+      <TopBar cta={false} />
+      <main id="content" className="band">
         <div className="narrow stack">
           <h1>Opening your stream</h1>
           <p className="lead">
@@ -52,13 +55,16 @@ export default function ClaimPage() {
               : 'Checking the link.'}
           </p>
         </div>
-      </section>
+      </main>
+      </>
     )
   }
 
   if (state.kind === 'bad') {
     return (
-      <section className="band">
+      <>
+      <TopBar cta={false} />
+      <main id="content" className="band">
         <div className="narrow stack">
           <h1>That link does not open a stream</h1>
           <p className="lead">
@@ -66,7 +72,8 @@ export default function ClaimPage() {
             funded. Ask the sender for a fresh one.
           </p>
         </div>
-      </section>
+      </main>
+      </>
     )
   }
 
@@ -74,7 +81,9 @@ export default function ClaimPage() {
 
   if (!mine) {
     return (
-      <section className="band">
+      <>
+      <TopBar cta={false} />
+      <main id="content" className="band">
         <div className="narrow stack">
           <h1>This stream has already moved on</h1>
           <p className="lead">
@@ -85,12 +94,15 @@ export default function ClaimPage() {
             Go to your streams
           </Link>
         </div>
-      </section>
+      </main>
+      </>
     )
   }
 
   return (
-    <section className="band">
+    <>
+    <TopBar cta={false} />
+    <main id="content" className="band">
       <div className="narrow stack" style={{ gap: 'var(--s5)' }}>
         <div className="stack-tight">
           <h1>{toStrk(stream.total)} STRK is vesting to you</h1>
@@ -137,6 +149,7 @@ export default function ClaimPage() {
           </p>
         </div>
       </div>
-    </section>
+    </main>
+    </>
   )
 }

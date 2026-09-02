@@ -10,6 +10,7 @@ export default function Landing() {
     <>
       <TopBar />
 
+      <main id="content">
       <section className="band">
         <div className="wrap stack" style={{ gap: 'var(--s5)' }}>
           <h1 className="display" style={{ maxWidth: '16ch' }}>
@@ -105,6 +106,8 @@ export default function Landing() {
           </dl>
         </div>
       </section>
+
+      </main>
 
       <footer className="band" style={{ paddingTop: 'var(--s5)', paddingBottom: 'var(--s5)' }}>
         <div className="wrap muted" style={{ display: 'flex', gap: 'var(--s3)', flexWrap: 'wrap' }}>

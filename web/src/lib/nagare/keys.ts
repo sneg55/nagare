@@ -56,24 +56,6 @@ export function exportKeys(): string {
   return JSON.stringify(read())
 }
 
-const SINK = 'http://localhost:3031/keys'
-
-export async function pushKeysToSink(): Promise<number> {
-  const store = read()
-  await fetch(SINK, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(store),
-  })
-  return Object.keys(store).length
-}
-
-export async function pullKeysFromSink(): Promise<number> {
-  const incoming = (await (await fetch(SINK)).json()) as KeyStore
-  write({ ...read(), ...incoming })
-  return Object.keys(incoming).length
-}
-
 export function importKeys(blob: string) {
   const parsed = JSON.parse(blob) as KeyStore
   write({ ...read(), ...parsed })

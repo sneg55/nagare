@@ -10,7 +10,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     <WalletProvider>
       <TopBar cta={false} />
       <WalletBar />
-      {children}
+      <main id="content">{children}</main>
     </WalletProvider>
   )
 }
