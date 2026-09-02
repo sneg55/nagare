@@ -1,0 +1,23 @@
+[package]
+name = "nagare"
+version = "0.1.0"
+edition = "2024_07"
+
+[dependencies]
+starknet = "2.20.0"
+openzeppelin = "3.0.0"
+privacy = { git = "https://github.com/starkware-libs/starknet-privacy", rev = "bc75e4bac71ad0ce10c6e63effc33b5b25131a4f" }
+
+[dev-dependencies]
+snforge_std = "0.63.0"
+assert_macros = "2.20.0"
+
+[tool.scarb]
+allow-prebuilt-plugins = ["snforge_std"]
+
+[[target.starknet-contract]]
+sierra = true
+casm = true
+
+[scripts]
+test = "snforge test"
