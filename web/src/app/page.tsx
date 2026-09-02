@@ -32,7 +32,13 @@ export default function Harness() {
   const [registered, setRegistered] = useState<boolean | null>(null)
 
   const say = useCallback((text: string, hash?: string) => {
-    setLog((l) => [...l, { at: new Date().toISOString().slice(11, 19), text, hash }])
+    const at = new Date().toISOString().slice(11, 19)
+    setLog((l) => [...l, { at, text, hash }])
+    void fetch('http://localhost:3031', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ line: `${at} ${text}${hash ? ' ' + hash : ''}` }),
+    }).catch(() => {})
   }, [])
 
   const guard = useCallback(
@@ -135,6 +141,40 @@ export default function Harness() {
       setStreamId(String(nextId))
     })
 
+  const diagnose = () =>
+    guard('diagnose', async () => {
+      if (!conn) throw new Error('connect first')
+      const id = BigInt(streamId)
+
+      const probes: { name: string; actions: WALLET_API.STRK20_ACTION[] }[] = [
+        {
+          name: 'A: deposit only, no invoke, no open note',
+          actions: [{ type: 'deposit', token: STRK, amount: num.toHex(10n ** 15n) }],
+        },
+        {
+          name: 'B: open note to self, nothing fills it',
+          actions: [{ type: 'transfer', token: STRK, amount: 'OPEN', recipient: conn.address }],
+        },
+        {
+          name: 'C: our Withdraw with a zero signature',
+          actions: payoutActions({ op: 'Withdraw', streamId: id, recipientAddress: conn.address }),
+        },
+      ]
+
+      for (const probe of probes) {
+        try {
+          const r = await conn.wallet.strk20PrepareInvoke(probe.actions, true)
+          const cd = (r.call?.calldata as string[] | undefined) ?? []
+          say(`${probe.name}: OK, ${cd.length} calldata felts`)
+        } catch (e) {
+          say(`${probe.name}: ${(e as Error).message ?? String(e)}`)
+        }
+      }
+      say('reading: A tells us whether Ready supports prepare at all')
+      say('B tells us whether prepare executes the actions (it should revert if so)')
+      say('C is the shape Withdraw needs')
+    })
+
   const withdraw = () =>
     guard('withdraw', async () => {
       if (!conn) throw new Error('connect first')
@@ -148,11 +188,13 @@ export default function Harness() {
       say(`withdrawable: ${due.toString()}`)
       if (due === 0n) throw new Error('nothing vested yet, wait for the cliff')
 
-      const probe = invokeCalldata({
-        op: 'Withdraw',
-        streamId: id,
-        noteId: OPEN_NOTE_PLACEHOLDER,
-      })
+      const probeOf = (sig?: [string, string]) =>
+        invokeCalldata({
+          op: 'Withdraw',
+          streamId: id,
+          noteId: OPEN_NOTE_PLACEHOLDER,
+          sig,
+        })
       const dry = payoutActions({
         op: 'Withdraw',
         streamId: id,
@@ -160,7 +202,7 @@ export default function Harness() {
       })
       say('dry run 1: asking the wallet to resolve the open note id')
       const prepared = await conn.wallet.strk20PrepareInvoke(dry, true)
-      const noteId = resolveNoteId(prepared.call.calldata as string[], probe)
+      const noteId = resolveNoteId(prepared.call.calldata as string[], probeOf())
       say(`resolved note id ${noteId}`)
 
       const sig = signPayout(key.privateKey, {
@@ -179,7 +221,7 @@ export default function Harness() {
       })
       say('dry run 2: confirming the note id did not move')
       const recheck = await conn.wallet.strk20PrepareInvoke(signed, true)
-      const noteAgain = resolveNoteId(recheck.call.calldata as string[], probe)
+      const noteAgain = resolveNoteId(recheck.call.calldata as string[], probeOf(sig))
       if (BigInt(noteAgain) !== BigInt(noteId)) {
         throw new Error(
           `the wallet changed the note it would pay into (${noteId} -> ${noteAgain}), nothing was sent, try again`,
@@ -263,6 +305,9 @@ export default function Harness() {
           </button>
           <button onClick={withdraw} disabled={busy || !conn} style={{ marginLeft: 8 }}>
             Withdraw
+          </button>
+          <button onClick={diagnose} disabled={busy || !conn} style={{ marginLeft: 8 }}>
+            Diagnose prepare
           </button>
           <button
             onClick={() => {
