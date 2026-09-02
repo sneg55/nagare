@@ -7,7 +7,9 @@ export const STRK = num.toHex('0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab0
 export const NAGARE_PADDED = '0x00ae22ea6b8c2e10bb19450d4caac7d31c89168379e4aef02d83e3eb8f03e323'
 
 export const CHAIN_ID = 'SN_MAIN'
-export const RPC_URL = 'https://rpc.starknet.lava.build'
+export const RPC_URL =
+  process.env.NEXT_PUBLIC_RPC_URL ??
+  'https://starknet-mainnet.g.alchemy.com/starknet/version/rpc/v0_9/demo'
 export const DEPLOYMENT_BLOCK = 0
 
 export const VOYAGER = 'https://voyager.online'
