@@ -11,6 +11,7 @@ import { parseStrk, toStrk } from '@/lib/nagare/format'
 import { POOL_FEE } from '@/lib/nagare/config'
 import { watch } from '@/lib/nagare/watch'
 import { claimLink } from '@/lib/nagare/claim'
+import { VestingChart } from '@/components/VestingChart'
 
 export default function CreatePage() {
   const { shielded, conn } = useWallet()
@@ -106,6 +107,14 @@ export default function CreatePage() {
               <input value={endDays} onChange={(e) => setEndDays(e.target.value)} inputMode="numeric" />
             </label>
           </div>
+
+          <VestingChart
+            total={Number.isFinite(Number(amount)) && Number(amount) >= 0 ? Number(amount) : null}
+            cliffDays={Number.isFinite(Number(cliffDays)) ? Number(cliffDays) : 0}
+            endDays={Number.isFinite(Number(endDays)) ? Number(endDays) : 1}
+            onCliffDays={(d) => setCliffDays(String(d))}
+            onEndDays={(d) => setEndDays(String(d))}
+          />
 
           <div className="stack-tight">
             <span className="muted">Who receives it</span>

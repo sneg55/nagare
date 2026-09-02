@@ -425,6 +425,69 @@ button:disabled {
   outline: none;
 }
 
+.chart {
+  display: block;
+  width: 100%;
+  height: 208px;
+}
+
+.chart-area {
+  fill: var(--sky);
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.chart-axis {
+  stroke: var(--edge);
+}
+
+.chart-ceiling {
+  stroke: var(--fog);
+  stroke-dasharray: 2 5;
+}
+
+.chart-scrub {
+  stroke: var(--ink);
+  stroke-dasharray: 2 3;
+}
+
+.chart-handle {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.chart-grab {
+  fill: transparent;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.chart-grab:focus-visible {
+  outline: none;
+}
+
+.chart-ring {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.chart-label {
+  fill: var(--graphite);
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+.chart-note {
+  min-height: 52px;
+}
+
 .detail-grid {
   display: grid;
   gap: var(--s5);
