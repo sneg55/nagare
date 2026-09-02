@@ -78,3 +78,25 @@ export function importKeys(blob: string) {
   const parsed = JSON.parse(blob) as KeyStore
   write({ ...read(), ...parsed })
 }
+
+const IN_FLIGHT_KEY = 'nagare.inflight.v1'
+
+export type InFlight = { op: string; streamId: string; at: number }
+
+export function readInFlight(): InFlight | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(IN_FLIGHT_KEY)
+    return raw ? (JSON.parse(raw) as InFlight) : null
+  } catch {
+    return null
+  }
+}
+
+export function writeInFlight(v: InFlight) {
+  window.localStorage.setItem(IN_FLIGHT_KEY, JSON.stringify(v))
+}
+
+export function clearInFlight() {
+  window.localStorage.removeItem(IN_FLIGHT_KEY)
+}

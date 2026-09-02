@@ -1,10 +1,20 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { num } from 'starknet'
 import type { WALLET_API } from '@starknet-io/types-js'
 import { NAGARE, POOL, STRK, VOYAGER } from '@/lib/nagare/config'
-import { generateKeypair, saveKey, loadKey, pushKeysToSink, pullKeysFromSink } from '@/lib/nagare/keys'
+import {
+  generateKeypair,
+  saveKey,
+  loadKey,
+  pushKeysToSink,
+  pullKeysFromSink,
+  readInFlight,
+  writeInFlight,
+  clearInFlight,
+  type InFlight,
+} from '@/lib/nagare/keys'
 import {
   createActions,
   invokeCalldata,
@@ -31,6 +41,12 @@ export default function Harness() {
   const [streamId, setStreamId] = useState('1')
   const [busy, setBusy] = useState(false)
   const [registered, setRegistered] = useState<boolean | null>(null)
+  const [pending, setPending] = useState<InFlight | null>(null)
+  const lock = useRef(false)
+
+  useEffect(() => {
+    setPending(readInFlight())
+  }, [])
 
   const say = useCallback((text: string, hash?: string) => {
     const at = new Date().toISOString().slice(11, 19)
@@ -44,6 +60,11 @@ export default function Harness() {
 
   const guard = useCallback(
     async (label: string, fn: () => Promise<void>) => {
+      if (lock.current) {
+        say(`${label}: ignored, ${label} is already running in this tab`)
+        return
+      }
+      lock.current = true
       setBusy(true)
       say(`${label}: start`)
       try {
@@ -59,7 +80,36 @@ export default function Harness() {
           say(`${label}: raw ${JSON.stringify(err, Object.getOwnPropertyNames(err)).slice(0, 700)}`)
         } catch {}
       } finally {
+        lock.current = false
         setBusy(false)
+      }
+    },
+    [say],
+  )
+
+  const submitOnce = useCallback(
+    async (
+      op: string,
+      streamId: string,
+      send: () => Promise<{ transaction_hash: string }>,
+    ): Promise<void> => {
+      const held = readInFlight()
+      if (held && held.op === op && held.streamId === streamId) {
+        const age = Math.round((Date.now() - held.at) / 1000)
+        throw new Error(
+          `a ${op} for stream ${streamId} was already sent to the wallet ${age}s ago and never resolved. ` +
+            `Approve or reject it in Ready, then press "Clear pending" here. Nothing new was sent.`,
+        )
+      }
+      writeInFlight({ op, streamId, at: Date.now() })
+      setPending(readInFlight())
+      say(`${op}: handed to the wallet, waiting for your approval in Ready`)
+      try {
+        const r = await send()
+        say(`${op} submitted`, r.transaction_hash)
+      } finally {
+        clearInFlight()
+        setPending(null)
       }
     },
     [say],
@@ -151,9 +201,10 @@ export default function Harness() {
         senderPk: sender.publicKey,
         recipientPk: recipient.publicKey,
       })
-      say(`submitting Create: ${total} wei, cliff +${cliffMinutes}m, end +${endMinutes}m`)
-      const r = await conn.wallet.strk20InvokeTransaction(actions)
-      say(`Create submitted`, r.transaction_hash)
+      say(`Create: ${total} wei, cliff +${cliffMinutes}m, end +${endMinutes}m`)
+      await submitOnce('Create', String(nextId), () =>
+        conn.wallet.strk20InvokeTransaction(actions),
+      )
       setStreamId(String(nextId))
     })
 
@@ -243,9 +294,7 @@ export default function Harness() {
         )
       }
 
-      say(`submitting ${op}`)
-      const r = await conn.wallet.strk20InvokeTransaction(signed)
-      say(`${op} submitted`, r.transaction_hash)
+      await submitOnce(op, String(id), () => conn.wallet.strk20InvokeTransaction(signed))
     })
 
   const withdraw = () => runPayout('Withdraw')
@@ -306,7 +355,7 @@ export default function Harness() {
           <input value={endMinutes} onChange={(e) => setEndMinutes(e.target.value)} style={{ width: 60 }} />
         </label>
         <div>
-          <button onClick={create} disabled={busy || !conn}>
+          <button onClick={create} disabled={busy || !conn || !!pending}>
             Create stream
           </button>
         </div>
@@ -321,10 +370,10 @@ export default function Harness() {
           <button onClick={readState} disabled={busy}>
             Read stream
           </button>
-          <button onClick={withdraw} disabled={busy || !conn} style={{ marginLeft: 8 }}>
+          <button onClick={withdraw} disabled={busy || !conn || !!pending} style={{ marginLeft: 8 }}>
             Withdraw
           </button>
-          <button onClick={cancel} disabled={busy || !conn} style={{ marginLeft: 8 }}>
+          <button onClick={cancel} disabled={busy || !conn || !!pending} style={{ marginLeft: 8 }}>
             Cancel
           </button>
           <button onClick={diagnose} disabled={busy || !conn} style={{ marginLeft: 8 }}>
@@ -346,6 +395,33 @@ export default function Harness() {
           </button>
         </div>
       </section>
+
+      {pending ? (
+        <section
+          style={{
+            marginTop: 24,
+            padding: 12,
+            background: '#f3f1eb',
+            border: '1px solid #dddcdd',
+            maxWidth: 620,
+          }}
+        >
+          <strong>{pending.op} for stream {pending.streamId} is waiting in Ready.</strong>
+          <p style={{ margin: '8px 0' }}>
+            Approve or reject it in the wallet. Nothing else will be sent while this is
+            outstanding. If Ready no longer shows it, clear this and start again.
+          </p>
+          <button
+            onClick={() => {
+              clearInFlight()
+              setPending(null)
+              say('pending marker cleared')
+            }}
+          >
+            Clear pending
+          </button>
+        </section>
+      ) : null}
 
       <section style={{ marginTop: 24 }}>
         <h2 style={{ fontSize: 14 }}>Log</h2>
