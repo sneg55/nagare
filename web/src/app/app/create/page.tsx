@@ -1,0 +1,179 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { useWallet } from '@/components/WalletProvider'
+import { useAction, ActionStatus } from '@/components/ActionRunner'
+import { createActions } from '@/lib/nagare/actions'
+import { generateKeypair, saveKey } from '@/lib/nagare/keys'
+import { streamCount } from '@/lib/nagare/read'
+import { parseStrk, toStrk } from '@/lib/nagare/format'
+import { POOL_FEE } from '@/lib/nagare/config'
+import { watch } from '@/lib/nagare/watch'
+import { claimLink } from '@/lib/nagare/claim'
+
+export default function CreatePage() {
+  const { shielded, conn } = useWallet()
+  const router = useRouter()
+  const [amount, setAmount] = useState('100')
+  const [cliffDays, setCliffDays] = useState('90')
+  const [endDays, setEndDays] = useState('365')
+  const [recipientKey, setRecipientKey] = useState('')
+  const [mode, setMode] = useState<'link' | 'key'>('link')
+  const [link, setLink] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const { phase, run, reset } = useAction('Create')
+
+  const submit = () => {
+    setError(null)
+    setLink(null)
+    void run(async () => {
+      const total = parseStrk(amount)
+      if (total <= 0n) throw new Error('Enter how much STRK to vest.')
+      if (shielded !== null && total + POOL_FEE > shielded) {
+        throw new Error(
+          `You have ${toStrk(shielded)} STRK shielded. This stream needs ${toStrk(total)} plus a ${toStrk(POOL_FEE)} STRK pool fee.`,
+        )
+      }
+      const cliffD = Number(cliffDays)
+      const endD = Number(endDays)
+      if (!(cliffD >= 0 && endD > cliffD)) {
+        throw new Error('The stream has to end after its cliff.')
+      }
+
+      const now = Math.floor(Date.now() / 1000)
+      const nextId = (await streamCount()) + 1
+      const sender = generateKeypair()
+      saveKey(`stream:${nextId}:sender`, sender)
+
+      let recipientPk = recipientKey.trim()
+      if (mode === 'link') {
+        const recipient = generateKeypair()
+        saveKey(`stream:${nextId}:recipient`, recipient)
+        recipientPk = recipient.publicKey
+        setLink(claimLink(nextId, recipient.privateKey))
+      } else if (!/^0x[0-9a-fA-F]{1,63}$/.test(recipientPk)) {
+        throw new Error('That does not look like a Nagare key. It starts with 0x.')
+      }
+
+      watch(nextId)
+      return {
+        streamId: String(nextId),
+        actions: createActions({
+          total,
+          start: now,
+          cliff: now + cliffD * 86400,
+          end: now + endD * 86400,
+          senderPk: sender.publicKey,
+          recipientPk,
+        }),
+      }
+    })
+  }
+
+  const busy = phase.kind !== 'idle' && phase.kind !== 'failed' && phase.kind !== 'confirmed'
+
+  return (
+    <section className="band">
+      <div className="narrow stack" style={{ gap: 'var(--s5)' }}>
+        <div className="stack-tight">
+          <h1>Open a stream</h1>
+          <p className="lead">
+            The amount leaves your shielded balance now and unlocks to the recipient on
+            the schedule you set. You can cancel anything that has not vested.
+          </p>
+        </div>
+
+        <div className="stack">
+          <label className="field">
+            <span>Amount in STRK</span>
+            <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" />
+          </label>
+
+          <div style={{ display: 'grid', gap: 'var(--s2)', gridTemplateColumns: '1fr 1fr' }}>
+            <label className="field">
+              <span>Cliff, in days from now</span>
+              <input value={cliffDays} onChange={(e) => setCliffDays(e.target.value)} inputMode="numeric" />
+            </label>
+            <label className="field">
+              <span>Fully vested, in days</span>
+              <input value={endDays} onChange={(e) => setEndDays(e.target.value)} inputMode="numeric" />
+            </label>
+          </div>
+
+          <div className="stack-tight">
+            <span className="muted">Who receives it</span>
+            <div style={{ display: 'flex', gap: 'var(--s2)', flexWrap: 'wrap' }}>
+              <button
+                className="btn"
+                onClick={() => setMode('link')}
+                style={mode === 'link' ? { background: 'var(--ink)', color: 'var(--paper)' } : undefined}
+              >
+                Send them a claim link
+              </button>
+              <button
+                className="btn"
+                onClick={() => setMode('key')}
+                style={mode === 'key' ? { background: 'var(--ink)', color: 'var(--paper)' } : undefined}
+              >
+                They gave me a key
+              </button>
+            </div>
+            {mode === 'key' ? (
+              <label className="field">
+                <span>Their Nagare key</span>
+                <input
+                  value={recipientKey}
+                  onChange={(e) => setRecipientKey(e.target.value)}
+                  placeholder="0x…"
+                />
+              </label>
+            ) : (
+              <p className="muted">
+                We will make the recipient&rsquo;s key here and give you a link that carries
+                it. Send that link over a channel you trust: anyone holding it controls
+                the stream until the recipient re-keys.
+              </p>
+            )}
+          </div>
+
+          {shielded !== null ? (
+            <p className="muted">
+              Shielded balance {toStrk(shielded)} STRK. This costs the amount above plus a{' '}
+              {toStrk(POOL_FEE)} STRK pool fee.
+            </p>
+          ) : null}
+
+          {error ? <p role="alert">{error}</p> : null}
+
+          <div>
+            <button className="btn btn-primary" onClick={submit} disabled={busy || !conn}>
+              {conn ? 'Fund this stream' : 'Connect a wallet to fund'}
+            </button>
+          </div>
+        </div>
+
+        <ActionStatus phase={phase} op="Create" reset={reset} />
+
+        {link ? (
+          <div className="card card-outlined stack-tight">
+            <h3>Claim link for the recipient</h3>
+            <p className="muted">
+              Copy this now. It is not stored anywhere and this page will not show it
+              again.
+            </p>
+            <input readOnly value={link} onFocus={(e) => e.currentTarget.select()} className="field" style={{ width: '100%', padding: 12, border: '1px solid var(--fog)', borderRadius: 'var(--r-ui)' }} />
+            <div style={{ display: 'flex', gap: 'var(--s2)' }}>
+              <button className="btn" onClick={() => void navigator.clipboard.writeText(link)}>
+                Copy link
+              </button>
+              <button className="btn btn-quiet" onClick={() => router.push('/app/streams')}>
+                Go to your streams
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  )
+}
