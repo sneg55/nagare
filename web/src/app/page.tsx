@@ -116,10 +116,16 @@ export default function Harness() {
     guard('create', async () => {
       if (!conn) throw new Error('connect first')
       const total = BigInt(Math.round(Number(amount) * 1e6)) * 10n ** 12n
+      if (total <= 0n) throw new Error('amount must be greater than zero')
       const now = Math.floor(Date.now() / 1000)
       const start = now
       const cliff = now + Number(cliffMinutes) * 60
       const end = now + Number(endMinutes) * 60
+      if (!(start <= cliff && cliff < end)) {
+        throw new Error(
+          `the schedule must run start <= cliff < end; the cliff is at +${cliffMinutes}m and the end at +${endMinutes}m, so the end must be later than the cliff`,
+        )
+      }
 
       const nextId = (await streamCount()) + 1
       const sender = generateKeypair()
