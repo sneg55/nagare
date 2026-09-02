@@ -545,3 +545,47 @@ fn a_signature_made_in_typescript_verifies_in_cairo() {
     assert!(h == expected, "cairo and typescript disagree on the message hash");
     assert!(core::ecdsa::check_ecdsa_signature(h, public_key, r, s));
 }
+
+#[test]
+#[should_panic(expected: 'BAD_EXPIRY')]
+fn an_offer_whose_expiry_exceeds_the_cap_reverts() {
+    let fx = setup();
+    fund(@fx, PRICE);
+    offer(@fx, 1, 111, PRICE, START + nagare::MAX_OFFER_DURATION + 1);
+}
+
+#[test]
+#[should_panic(expected: 'OFFER_CLEARED')]
+fn reclaim_twice_reverts() {
+    let fx = setup();
+    let buyer = KeyPairTrait::<felt252, felt252>::generate();
+    fund(@fx, PRICE);
+    offer(@fx, 1, buyer.public_key, PRICE, EXPIRY);
+    let (r, s) = sign(@fx, @buyer, 1, Op::Reclaim, REFUND_NOTE, 1, 0);
+    invoke(@fx, Op::Reclaim, 1, REFUND_NOTE, 1, r, s);
+    invoke(@fx, Op::Reclaim, 1, REFUND_NOTE, 1, r, s);
+}
+
+#[test]
+#[should_panic(expected: 'OFFER_CLEARED')]
+fn reclaim_after_accept_reverts() {
+    let fx = setup();
+    let buyer = KeyPairTrait::<felt252, felt252>::generate();
+    fund(@fx, PRICE);
+    offer(@fx, 1, buyer.public_key, PRICE, EXPIRY);
+    let (ra, sa) = sign(@fx, @fx.recipient, 1, Op::Accept, NOTE, 1, 0);
+    invoke(@fx, Op::Accept, 1, NOTE, 1, ra, sa);
+    let (r, s) = sign(@fx, @buyer, 1, Op::Reclaim, REFUND_NOTE, 1, 0);
+    invoke(@fx, Op::Reclaim, 1, REFUND_NOTE, 1, r, s);
+}
+
+#[test]
+#[should_panic(expected: 'OFFER_CLEARED')]
+fn accept_twice_reverts() {
+    let fx = setup();
+    fund(@fx, PRICE);
+    offer(@fx, 1, 111, PRICE, EXPIRY);
+    let (r, s) = sign(@fx, @fx.recipient, 1, Op::Accept, NOTE, 1, 0);
+    invoke(@fx, Op::Accept, 1, NOTE, 1, r, s);
+    invoke(@fx, Op::Accept, 1, NOTE, 1, r, s);
+}

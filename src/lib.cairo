@@ -42,6 +42,8 @@ pub enum Op {
 
 pub const SIG_DOMAIN: felt252 = 'NAGARE_SIG:V1';
 
+pub const MAX_OFFER_DURATION: u64 = 2_592_000;
+
 pub fn op_code(op: Op) -> felt252 {
     match op {
         Op::Create => 0,
@@ -145,7 +147,9 @@ pub mod Nagare {
     use starknet::{
         ContractAddress, get_block_timestamp, get_caller_address, get_contract_address, get_tx_info,
     };
-    use super::{INagare, Offer, Op, Stream, errors, signing_hash, streamed_amount};
+    use super::{
+        INagare, MAX_OFFER_DURATION, Offer, Op, Stream, errors, signing_hash, streamed_amount,
+    };
 
     #[storage]
     struct Storage {
@@ -483,7 +487,7 @@ pub mod Nagare {
             assert(price.is_non_zero(), errors::ZERO_PRICE);
             assert(buyer_pk.is_non_zero(), errors::ZERO_KEY);
             let now = get_block_timestamp();
-            assert(expiry > now, errors::BAD_EXPIRY);
+            assert(expiry > now && expiry <= now + MAX_OFFER_DURATION, errors::BAD_EXPIRY);
             assert(!self.live_offer(stream_id, now), errors::OFFER_LIVE);
             self.reserve(st.token, price);
             let generation = self.generations.read(stream_id) + 1;
