@@ -8,3 +8,4 @@ target/
 .snfoundry_cache/
 snfoundry.toml
 accounts.json
+.harness/

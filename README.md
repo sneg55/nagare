@@ -24,7 +24,7 @@ and Nagare pays the pool, so the graph between sender and recipient is never dra
 | The wallet address that receives it | The sender key and recipient key of every stream (pseudonyms), and every re-key |
 | The wallet address that canceled, transferred, listed, offered or accepted | Nagare's STRK balance and per-token liability |
 | Which wallet owns the open note a payout lands in | Each withdrawal's, refund's and sale's amount and time |
-| | Every offer's price, expiry and buyer key |
+| | Whether a stream is listed for sale, and every offer's price, expiry and buyer key |
 | | Every signature and every calldata item, including note ids |
 
 The word is disclosed, not hidden. Amounts, schedules and timing are public. A
