@@ -27,17 +27,19 @@ import { watch } from '@/lib/nagare/watch'
 
 export function StreamDetail({ id }: { id: number }) {
   const { conn, prepare } = useWallet()
+  const valid = Number.isInteger(id) && id > 0
   const [stream, setStream] = useState<Stream | null>(null)
   const [offer, setOffer] = useState<Offer | null>(null)
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000))
   const [newKey, setNewKey] = useState('')
 
   const load = useCallback(async () => {
+    if (!valid) return
     const [s, o] = await Promise.all([getStream(id), getOffer(id)])
     setStream(s)
     setOffer(o)
     if (s.exists) watch(id)
-  }, [id])
+  }, [id, valid])
 
   useEffect(() => {
     void load()
@@ -50,10 +52,29 @@ export function StreamDetail({ id }: { id: number }) {
   const transfer = useAction('Transfer', load)
   const list = useAction('List', load)
 
+  if (!valid) {
+    return (
+      <section className="band">
+        <div className="narrow stack">
+          <h1>That is not a stream id</h1>
+          <p className="lead">
+            Stream ids are whole numbers counting up from 1. Check the link you followed,
+            or find the stream in your list.
+          </p>
+          <div>
+            <Link href="/app/streams" className="btn">
+              Back to your streams
+            </Link>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   if (!stream) {
     return (
       <section className="band">
-        <div className="wrap muted">Reading stream {id}…</div>
+        <div className="wrap muted">Reading stream {id} from the contract…</div>
       </section>
     )
   }

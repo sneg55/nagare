@@ -10,6 +10,7 @@ import { toStrk, when } from '@/lib/nagare/format'
 
 type State =
   | { kind: 'reading' }
+  | { kind: 'loading'; streamId: number }
   | { kind: 'bad' }
   | { kind: 'ready'; streamId: number; stream: Stream; mine: boolean }
 
@@ -23,6 +24,7 @@ export default function ClaimPage() {
       return
     }
     const { streamId, privateKey } = parsed
+    setState({ kind: 'loading', streamId })
     void (async () => {
       const stream = await getStream(streamId)
       if (!stream.exists) {
@@ -39,10 +41,17 @@ export default function ClaimPage() {
     })()
   }, [])
 
-  if (state.kind === 'reading') {
+  if (state.kind === 'reading' || state.kind === 'loading') {
     return (
       <section className="band">
-        <div className="narrow muted">Opening the link…</div>
+        <div className="narrow stack">
+          <h1>Opening your stream</h1>
+          <p className="lead">
+            {state.kind === 'loading'
+              ? `Reading stream ${state.streamId} from Starknet. This takes a few seconds.`
+              : 'Checking the link.'}
+          </p>
+        </div>
       </section>
     )
   }

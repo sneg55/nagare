@@ -24,6 +24,14 @@ export default function CreatePage() {
   const [error, setError] = useState<string | null>(null)
   const { phase, run, reset } = useAction('Create')
 
+  const totalCost = (() => {
+    try {
+      return toStrk(parseStrk(amount || '0') + POOL_FEE)
+    } catch {
+      return '—'
+    }
+  })()
+
   const submit = () => {
     setError(null)
     setLink(null)
@@ -137,12 +145,32 @@ export default function CreatePage() {
             )}
           </div>
 
-          {shielded !== null ? (
-            <p className="muted">
-              Shielded balance {toStrk(shielded)} STRK. This costs the amount above plus a{' '}
-              {toStrk(POOL_FEE)} STRK pool fee.
-            </p>
-          ) : null}
+          <dl className="rows">
+            <div className="row">
+              <dt>Vested to the recipient</dt>
+              <dd>{amount || '0'} STRK</dd>
+            </div>
+            <div className="row">
+              <dt>Pool fee, charged by STRK20 on every private transaction</dt>
+              <dd>{toStrk(POOL_FEE)} STRK</dd>
+            </div>
+            <div className="row">
+              <dt>Leaves your shielded balance</dt>
+              <dd>{totalCost} STRK</dd>
+            </div>
+            {shielded !== null ? (
+              <div className="row">
+                <dt>You have shielded</dt>
+                <dd>{toStrk(shielded)} STRK</dd>
+              </div>
+            ) : null}
+          </dl>
+
+          <p className="muted">
+            The recipient&rsquo;s key is generated in this browser and stored only here.
+            There is no recovery: back it up from your streams page once the stream
+            exists, or losing this browser loses the stream.
+          </p>
 
           {error ? <p role="alert">{error}</p> : null}
 

@@ -8,12 +8,14 @@ import { statusOf, STATUS_LABEL, progress, claimableFraction, withdrawableAt } f
 import { toStrk, when } from '@/lib/nagare/format'
 import { Meter } from '@/components/Meter'
 import { loadKey } from '@/lib/nagare/keys'
+import { KeyBackup } from '@/components/KeyBackup'
 
 type Row = { id: number; stream: Stream; role: string }
 
 export default function StreamsPage() {
   const [rows, setRows] = useState<Row[] | null>(null)
   const [addId, setAddId] = useState('')
+  const [addNote, setAddNote] = useState<string | null>(null)
   const now = Math.floor(Date.now() / 1000)
 
   const load = async () => {
@@ -103,6 +105,8 @@ export default function StreamsPage() {
           </div>
         )}
 
+        <KeyBackup />
+
         <div className="card stack-tight" style={{ background: 'var(--cream)' }}>
           <h3>Add a stream by id</h3>
           <p className="muted">
@@ -120,17 +124,29 @@ export default function StreamsPage() {
             <button
               className="btn"
               onClick={() => {
-                const n = Number(addId)
-                if (Number.isInteger(n) && n > 0) {
+                void (async () => {
+                  const n = Number(addId)
+                  if (!Number.isInteger(n) || n < 1) {
+                    setAddNote('Stream ids are whole numbers counting up from 1.')
+                    return
+                  }
+                  setAddNote(null)
+                  const s = await getStream(n)
+                  if (!s.exists) {
+                    setAddNote(`The contract has no stream ${n}. Check the number with whoever sent it.`)
+                    return
+                  }
                   watch(n)
                   setAddId('')
-                  void load()
-                }
+                  setAddNote(`Watching stream ${n}.`)
+                  await load()
+                })()
               }}
             >
               Watch it
             </button>
           </div>
+          {addNote ? <p role="status">{addNote}</p> : null}
         </div>
       </div>
     </section>
