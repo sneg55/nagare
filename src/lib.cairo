@@ -16,6 +16,7 @@ pub struct Stream {
     pub recipient_pk: felt252,
     pub canceled: bool,
     pub nonce: felt252,
+    pub sellable: bool,
     pub exists: bool,
 }
 
@@ -38,11 +39,12 @@ pub enum Op {
     Offer,
     Accept,
     Reclaim,
+    List,
 }
 
 pub const SIG_DOMAIN: felt252 = 'NAGARE_SIG:V1';
 
-pub const MAX_OFFER_DURATION: u64 = 2_592_000;
+pub const MAX_OFFER_DURATION: u64 = 86_400;
 
 pub fn op_code(op: Op) -> felt252 {
     match op {
@@ -53,6 +55,7 @@ pub fn op_code(op: Op) -> felt252 {
         Op::Offer => 4,
         Op::Accept => 5,
         Op::Reclaim => 6,
+        Op::List => 7,
     }
 }
 
@@ -131,6 +134,7 @@ pub mod errors {
     pub const STREAM_CANCELED: felt252 = 'STREAM_CANCELED';
     pub const STREAM_DEPLETED: felt252 = 'STREAM_DEPLETED';
     pub const POSITION_MOVED: felt252 = 'POSITION_MOVED';
+    pub const NOT_FOR_SALE: felt252 = 'NOT_FOR_SALE';
     pub const ACCRUAL_OVERFLOW: felt252 = 'ACCRUAL_OVERFLOW';
 }
 
@@ -151,6 +155,7 @@ pub mod Nagare {
         INagare, MAX_OFFER_DURATION, Offer, Op, Stream, errors, signing_hash, streamed_amount,
     };
 
+
     #[storage]
     struct Storage {
         pool: ContractAddress,
@@ -170,6 +175,7 @@ pub mod Nagare {
         Withdrawn: Withdrawn,
         Canceled: Canceled,
         Transferred: Transferred,
+        Listed: Listed,
         Offered: Offered,
         Accepted: Accepted,
         Reclaimed: Reclaimed,
@@ -208,6 +214,14 @@ pub mod Nagare {
     pub struct Transferred {
         #[key]
         pub stream_id: u64,
+        pub at: u64,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct Listed {
+        #[key]
+        pub stream_id: u64,
+        pub sellable: bool,
         pub at: u64,
     }
 
@@ -287,6 +301,10 @@ pub mod Nagare {
                 Op::Accept => self.settle(pool, self.accept(stream_id, note_id, arg, sig_r, sig_s)),
                 Op::Reclaim => self
                     .settle(pool, self.reclaim(stream_id, note_id, arg, sig_r, sig_s)),
+                Op::List => {
+                    self.set_sellable(stream_id, arg, sig_r, sig_s);
+                    [].span()
+                },
             }
         }
 
@@ -418,6 +436,7 @@ pub mod Nagare {
                         recipient_pk,
                         canceled: false,
                         nonce: 0,
+                        sellable: false,
                         exists: true,
                     },
                 );
@@ -484,6 +503,7 @@ pub mod Nagare {
             let st = self.load(stream_id);
             assert(!st.canceled, errors::STREAM_CANCELED);
             assert(st.withdrawn < st.total, errors::STREAM_DEPLETED);
+            assert(st.sellable, errors::NOT_FOR_SALE);
             assert(price.is_non_zero(), errors::ZERO_PRICE);
             assert(buyer_pk.is_non_zero(), errors::ZERO_KEY);
             let now = get_block_timestamp();
@@ -518,6 +538,7 @@ pub mod Nagare {
         ) -> OpenNoteDeposit {
             let mut st = self.load(stream_id);
             assert(!st.canceled, errors::STREAM_CANCELED);
+            assert(st.sellable, errors::NOT_FOR_SALE);
             let generation = self.generations.read(stream_id);
             assert(arg == generation.into(), errors::STALE_GENERATION);
             let mut o = self.offers.read((stream_id, generation));
@@ -534,6 +555,17 @@ pub mod Nagare {
             self.release(st.token, o.price);
             self.emit(Accepted { stream_id, generation, price: o.price, at: now });
             OpenNoteDeposit { note_id, token: st.token, amount: o.price }
+        }
+
+        fn set_sellable(
+            ref self: ContractState, stream_id: u64, arg: felt252, r: felt252, s: felt252,
+        ) {
+            let mut st = self.load(stream_id);
+            self.require_sig(stream_id, Op::List, 0, arg, st.nonce, st.recipient_pk, r, s);
+            st.sellable = arg.is_non_zero();
+            st.nonce += 1;
+            self.streams.write(stream_id, st);
+            self.emit(Listed { stream_id, sellable: st.sellable, at: get_block_timestamp() });
         }
 
         fn reclaim(

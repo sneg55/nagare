@@ -93,6 +93,11 @@ fn invoke(
     (*fx.stream).privacy_invoke(op, stream_id, zero(), 0, 0, 0, 0, 0, 0, arg, note_id, r, s)
 }
 
+fn list(fx: @Fx, enable: felt252, nonce: felt252) {
+    let (r, s) = sign(fx, fx.recipient, 1, Op::List, 0, enable, nonce);
+    invoke(fx, Op::List, 1, 0, enable, r, s);
+}
+
 fn offer(fx: @Fx, stream_id: u64, buyer_pk: felt252, price: u128, expiry: u64) {
     (*fx.stream)
         .privacy_invoke(Op::Offer, stream_id, zero(), price, 0, 0, expiry, 0, 0, buyer_pk, 0, 0, 0);
@@ -357,6 +362,7 @@ fn offer_on_an_unknown_stream_reverts() {
 fn offer_escrows_the_price_and_accept_pays_the_seller_and_rekeys() {
     let fx = setup();
     let buyer = KeyPairTrait::<felt252, felt252>::generate();
+    list(@fx, 1, 0);
     fund(@fx, PRICE);
     offer(@fx, 1, buyer.public_key, PRICE, EXPIRY);
     let o = fx.stream.get_offer(1);
@@ -371,7 +377,7 @@ fn offer_escrows_the_price_and_accept_pays_the_seller_and_rekeys() {
     assert_liability(@fx, TOTAL);
 
     start_cheat_block_timestamp_global(END);
-    let (r2, s2) = sign(@fx, @buyer, 1, Op::Withdraw, NOTE, 0, 1);
+    let (r2, s2) = sign(@fx, @buyer, 1, Op::Withdraw, NOTE, 0, 2);
     let out2 = invoke(@fx, Op::Withdraw, 1, NOTE, 0, r2, s2);
     assert!((*out2.at(0)).amount == TOTAL);
     assert_liability(@fx, 0);
@@ -381,6 +387,7 @@ fn offer_escrows_the_price_and_accept_pays_the_seller_and_rekeys() {
 fn reclaim_returns_the_price_to_the_buyer() {
     let fx = setup();
     let buyer = KeyPairTrait::<felt252, felt252>::generate();
+    list(@fx, 1, 0);
     fund(@fx, PRICE);
     offer(@fx, 1, buyer.public_key, PRICE, EXPIRY);
     let (r, s) = sign(@fx, @buyer, 1, Op::Reclaim, REFUND_NOTE, 1, 0);
@@ -395,6 +402,7 @@ fn reclaim_returns_the_price_to_the_buyer() {
 fn reclaim_by_a_key_that_is_not_the_buyer_reverts() {
     let fx = setup();
     let buyer = KeyPairTrait::<felt252, felt252>::generate();
+    list(@fx, 1, 0);
     fund(@fx, PRICE);
     offer(@fx, 1, buyer.public_key, PRICE, EXPIRY);
     let (r, s) = sign(@fx, @fx.recipient, 1, Op::Reclaim, REFUND_NOTE, 1, 0);
@@ -405,6 +413,7 @@ fn reclaim_by_a_key_that_is_not_the_buyer_reverts() {
 #[should_panic(expected: 'OFFER_LIVE')]
 fn a_second_offer_while_one_is_live_reverts() {
     let fx = setup();
+    list(@fx, 1, 0);
     fund(@fx, PRICE * 2);
     offer(@fx, 1, 111, PRICE, EXPIRY);
     offer(@fx, 1, 222, PRICE, EXPIRY);
@@ -413,6 +422,7 @@ fn a_second_offer_while_one_is_live_reverts() {
 #[test]
 fn a_second_offer_is_allowed_once_the_first_expires() {
     let fx = setup();
+    list(@fx, 1, 0);
     fund(@fx, PRICE * 2);
     offer(@fx, 1, 111, PRICE, EXPIRY);
     start_cheat_block_timestamp_global(EXPIRY + 1);
@@ -426,6 +436,7 @@ fn a_second_offer_is_allowed_once_the_first_expires() {
 fn an_expired_offer_stays_reclaimable_after_a_newer_offer_replaces_it() {
     let fx = setup();
     let buyer1 = KeyPairTrait::<felt252, felt252>::generate();
+    list(@fx, 1, 0);
     fund(@fx, PRICE * 2);
     offer(@fx, 1, buyer1.public_key, PRICE, EXPIRY);
     start_cheat_block_timestamp_global(EXPIRY + 1);
@@ -440,6 +451,7 @@ fn an_expired_offer_stays_reclaimable_after_a_newer_offer_replaces_it() {
 #[should_panic(expected: 'STALE_GENERATION')]
 fn accept_with_a_stale_generation_reverts() {
     let fx = setup();
+    list(@fx, 1, 0);
     fund(@fx, PRICE * 2);
     offer(@fx, 1, 111, PRICE, EXPIRY);
     start_cheat_block_timestamp_global(EXPIRY + 1);
@@ -452,6 +464,7 @@ fn accept_with_a_stale_generation_reverts() {
 #[should_panic(expected: 'OFFER_EXPIRED')]
 fn accept_after_the_offer_expires_reverts() {
     let fx = setup();
+    list(@fx, 1, 0);
     fund(@fx, PRICE);
     offer(@fx, 1, 111, PRICE, EXPIRY);
     start_cheat_block_timestamp_global(EXPIRY + 1);
@@ -463,10 +476,11 @@ fn accept_after_the_offer_expires_reverts() {
 #[should_panic(expected: 'POSITION_MOVED')]
 fn accept_after_the_seller_withdrew_reverts() {
     let fx = setup();
+    list(@fx, 1, 0);
     fund(@fx, PRICE);
-    offer(@fx, 1, 111, PRICE, END + 1_000);
+    offer(@fx, 1, 111, PRICE, EXPIRY);
     start_cheat_block_timestamp_global(midpoint());
-    let (rw, sw) = sign(@fx, @fx.recipient, 1, Op::Withdraw, NOTE, 0, 0);
+    let (rw, sw) = sign(@fx, @fx.recipient, 1, Op::Withdraw, NOTE, 0, 1);
     invoke(@fx, Op::Withdraw, 1, NOTE, 0, rw, sw);
     let (r, s) = sign(@fx, @fx.recipient, 1, Op::Accept, NOTE, 1, 0);
     invoke(@fx, Op::Accept, 1, NOTE, 1, r, s);
@@ -476,9 +490,10 @@ fn accept_after_the_seller_withdrew_reverts() {
 #[should_panic(expected: 'OFFER_LIVE')]
 fn transfer_while_an_offer_is_live_reverts() {
     let fx = setup();
+    list(@fx, 1, 0);
     fund(@fx, PRICE);
     offer(@fx, 1, 111, PRICE, EXPIRY);
-    let (r, s) = sign(@fx, @fx.recipient, 1, Op::Transfer, 0, 555, 0);
+    let (r, s) = sign(@fx, @fx.recipient, 1, Op::Transfer, 0, 555, 1);
     invoke(@fx, Op::Transfer, 1, 0, 555, r, s);
 }
 
@@ -486,32 +501,35 @@ fn transfer_while_an_offer_is_live_reverts() {
 #[should_panic(expected: 'STREAM_CANCELED')]
 fn an_offer_on_a_canceled_stream_reverts() {
     let fx = setup();
+    list(@fx, 1, 0);
     start_cheat_block_timestamp_global(midpoint());
-    let (r, s) = sign(@fx, @fx.sender, 1, Op::Cancel, REFUND_NOTE, 0, 0);
+    let (r, s) = sign(@fx, @fx.sender, 1, Op::Cancel, REFUND_NOTE, 0, 1);
     invoke(@fx, Op::Cancel, 1, REFUND_NOTE, 0, r, s);
     fund(@fx, PRICE);
-    offer(@fx, 1, 111, PRICE, END + 1_000);
+    offer(@fx, 1, 111, PRICE, midpoint() + 100);
 }
 
 #[test]
 #[should_panic(expected: 'STREAM_DEPLETED')]
 fn an_offer_on_a_depleted_stream_reverts() {
     let fx = setup();
+    list(@fx, 1, 0);
     start_cheat_block_timestamp_global(END);
-    let (r, s) = sign(@fx, @fx.recipient, 1, Op::Withdraw, NOTE, 0, 0);
+    let (r, s) = sign(@fx, @fx.recipient, 1, Op::Withdraw, NOTE, 0, 1);
     invoke(@fx, Op::Withdraw, 1, NOTE, 0, r, s);
     fund(@fx, PRICE);
-    offer(@fx, 1, 111, PRICE, END + 1_000);
+    offer(@fx, 1, 111, PRICE, END + 100);
 }
 
 #[test]
 fn cancel_leaves_a_live_offer_reclaimable() {
     let fx = setup();
     let buyer = KeyPairTrait::<felt252, felt252>::generate();
+    list(@fx, 1, 0);
     fund(@fx, PRICE);
     offer(@fx, 1, buyer.public_key, PRICE, END + 1_000);
     start_cheat_block_timestamp_global(midpoint());
-    let (rc, sc) = sign(@fx, @fx.sender, 1, Op::Cancel, REFUND_NOTE, 0, 0);
+    let (rc, sc) = sign(@fx, @fx.sender, 1, Op::Cancel, REFUND_NOTE, 0, 1);
     invoke(@fx, Op::Cancel, 1, REFUND_NOTE, 0, rc, sc);
     let (rr, sr) = sign(@fx, @buyer, 1, Op::Reclaim, 901, 1, 0);
     let out = invoke(@fx, Op::Reclaim, 1, 901, 1, rr, sr);
@@ -523,10 +541,11 @@ fn cancel_leaves_a_live_offer_reclaimable() {
 #[should_panic(expected: 'STREAM_CANCELED')]
 fn accept_on_a_canceled_stream_reverts() {
     let fx = setup();
+    list(@fx, 1, 0);
     fund(@fx, PRICE);
     offer(@fx, 1, 111, PRICE, END + 1_000);
     start_cheat_block_timestamp_global(midpoint());
-    let (rc, sc) = sign(@fx, @fx.sender, 1, Op::Cancel, REFUND_NOTE, 0, 0);
+    let (rc, sc) = sign(@fx, @fx.sender, 1, Op::Cancel, REFUND_NOTE, 0, 1);
     invoke(@fx, Op::Cancel, 1, REFUND_NOTE, 0, rc, sc);
     let (r, s) = sign(@fx, @fx.recipient, 1, Op::Accept, NOTE, 1, 0);
     invoke(@fx, Op::Accept, 1, NOTE, 1, r, s);
@@ -550,6 +569,7 @@ fn a_signature_made_in_typescript_verifies_in_cairo() {
 #[should_panic(expected: 'BAD_EXPIRY')]
 fn an_offer_whose_expiry_exceeds_the_cap_reverts() {
     let fx = setup();
+    list(@fx, 1, 0);
     fund(@fx, PRICE);
     offer(@fx, 1, 111, PRICE, START + nagare::MAX_OFFER_DURATION + 1);
 }
@@ -559,6 +579,7 @@ fn an_offer_whose_expiry_exceeds_the_cap_reverts() {
 fn reclaim_twice_reverts() {
     let fx = setup();
     let buyer = KeyPairTrait::<felt252, felt252>::generate();
+    list(@fx, 1, 0);
     fund(@fx, PRICE);
     offer(@fx, 1, buyer.public_key, PRICE, EXPIRY);
     let (r, s) = sign(@fx, @buyer, 1, Op::Reclaim, REFUND_NOTE, 1, 0);
@@ -571,6 +592,7 @@ fn reclaim_twice_reverts() {
 fn reclaim_after_accept_reverts() {
     let fx = setup();
     let buyer = KeyPairTrait::<felt252, felt252>::generate();
+    list(@fx, 1, 0);
     fund(@fx, PRICE);
     offer(@fx, 1, buyer.public_key, PRICE, EXPIRY);
     let (ra, sa) = sign(@fx, @fx.recipient, 1, Op::Accept, NOTE, 1, 0);
@@ -583,9 +605,72 @@ fn reclaim_after_accept_reverts() {
 #[should_panic(expected: 'OFFER_CLEARED')]
 fn accept_twice_reverts() {
     let fx = setup();
+    list(@fx, 1, 0);
     fund(@fx, PRICE);
     offer(@fx, 1, 111, PRICE, EXPIRY);
     let (r, s) = sign(@fx, @fx.recipient, 1, Op::Accept, NOTE, 1, 0);
     invoke(@fx, Op::Accept, 1, NOTE, 1, r, s);
     invoke(@fx, Op::Accept, 1, NOTE, 1, r, s);
+}
+
+#[test]
+#[should_panic(expected: 'NOT_FOR_SALE')]
+fn an_offer_on_a_stream_not_listed_for_sale_reverts() {
+    let fx = setup();
+    fund(@fx, PRICE);
+    offer(@fx, 1, 111, PRICE, EXPIRY);
+}
+
+#[test]
+fn a_stream_is_not_for_sale_until_the_recipient_lists_it() {
+    let fx = setup();
+    assert!(!fx.stream.get_stream(1).sellable);
+    list(@fx, 1, 0);
+    assert!(fx.stream.get_stream(1).sellable);
+    list(@fx, 0, 1);
+    assert!(!fx.stream.get_stream(1).sellable);
+}
+
+#[test]
+#[should_panic(expected: 'INVALID_SIG')]
+fn the_sender_cannot_list_the_stream_for_sale() {
+    let fx = setup();
+    let (r, s) = sign(@fx, @fx.sender, 1, Op::List, 0, 1, 0);
+    invoke(@fx, Op::List, 1, 0, 1, r, s);
+}
+
+#[test]
+#[should_panic(expected: 'NOT_FOR_SALE')]
+fn delisting_refuses_accept_on_a_live_offer() {
+    let fx = setup();
+    list(@fx, 1, 0);
+    fund(@fx, PRICE);
+    offer(@fx, 1, 111, PRICE, EXPIRY);
+    list(@fx, 0, 1);
+    let (r, s) = sign(@fx, @fx.recipient, 1, Op::Accept, NOTE, 1, 0);
+    invoke(@fx, Op::Accept, 1, NOTE, 1, r, s);
+}
+
+#[test]
+fn delisting_leaves_a_live_offer_reclaimable() {
+    let fx = setup();
+    let buyer = KeyPairTrait::<felt252, felt252>::generate();
+    list(@fx, 1, 0);
+    fund(@fx, PRICE);
+    offer(@fx, 1, buyer.public_key, PRICE, EXPIRY);
+    list(@fx, 0, 1);
+    let (r, s) = sign(@fx, @buyer, 1, Op::Reclaim, REFUND_NOTE, 1, 0);
+    let out = invoke(@fx, Op::Reclaim, 1, REFUND_NOTE, 1, r, s);
+    assert!((*out.at(0)).amount == PRICE);
+    assert_liability(@fx, TOTAL);
+}
+
+#[test]
+#[should_panic(expected: 'INVALID_SIG')]
+fn a_listing_signature_cannot_be_replayed_to_relist() {
+    let fx = setup();
+    let (r, s) = sign(@fx, @fx.recipient, 1, Op::List, 0, 1, 0);
+    invoke(@fx, Op::List, 1, 0, 1, r, s);
+    list(@fx, 0, 1);
+    invoke(@fx, Op::List, 1, 0, 1, r, s);
 }
