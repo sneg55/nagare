@@ -13,7 +13,7 @@ export function TopBar({ cta = true }: { cta?: boolean }) {
         <span>Nagare</span>
       </Link>
       <nav>
-        <Link href="/app/schedules">Schedules</Link>
+        <Link href="/app/schedules">My Schedules</Link>
         <Link href="/app/market">Marketplace</Link>
         {cta ? (
           <Link href="/app/create" className="btn">
