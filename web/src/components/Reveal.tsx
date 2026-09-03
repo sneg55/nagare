@@ -5,8 +5,8 @@ export function Reveal() {
     <div className="stack">
       <h2>What the chain can see</h2>
       <p className="lead">
-        Nagare hides who, not what. These are the exact terms, so you can decide whether
-        they fit before you fund anything.
+        Nagare hides the parties and publishes the terms. Here they are in full, so you
+        can decide whether they fit before you fund anything.
       </p>
       <div className="two-cols">
         <div className="stack-tight">

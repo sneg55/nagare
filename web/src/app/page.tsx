@@ -17,9 +17,9 @@ export default function Landing() {
             Vesting that doesn&rsquo;t publish your <span className="hl">cap table</span>.
           </h1>
           <p className="lead" style={{ maxWidth: '58ch' }}>
-            Open a vesting schedule on Starknet where the sender and the recipient are keys,
-            not wallet addresses. The unlock is enforced on chain. Who is on either end of
-            it never appears in the transaction.
+            Open a vesting schedule on Starknet where the contract knows the sender and
+            the recipient only as keys. It enforces the unlock, and nothing in the
+            transaction says who is on either end of it.
           </p>
           <div className="row-actions">
             <Link href="/app/create" className="btn btn-primary">
@@ -36,23 +36,23 @@ export default function Landing() {
       <section className="band band-cream">
         <div className="wrap stack stack-lg">
           <h2 style={{ maxWidth: '20ch' }}>
-            Every other vesting contract names both parties, forever.
+            Every other vesting contract names both parties in public.
           </h2>
           <p className="lead" style={{ maxWidth: '62ch' }}>
             Open a Tokei or Sablier stream on Voyager and you can read the cap table off
-            it: which address funds which, on what schedule, for how much. That record
-            does not expire. Nagare moves the funding and the payouts inside the STRK20
-            pool, so the line between the two wallets is never drawn.
+            it: which address funds which, on what schedule, for how much, and that record
+            does not expire. Nagare moves the funding and the payouts through the STRK20
+            pool, so neither wallet ever appears next to the other.
           </p>
           <div className="grid-cards">
             {[
               {
                 t: 'Fund from a shielded balance',
-                d: 'The pool pays Nagare. Your wallet is not in the transaction, and the recipient does not need a wallet on the day you set it up.',
+                d: 'The pool pays Nagare on your behalf, so the transaction carries no address of yours. The recipient does not need a wallet on the day you set it up.',
               },
               {
                 t: 'Withdraw what has vested',
-                d: 'Linear accrual with a cliff. The recipient signs with their key and the amount lands in a private note.',
+                d: 'The amount accrues linearly from the day it is funded, and withdrawals open at the cliff. The recipient signs with their key and the amount lands in a private note.',
               },
               {
                 t: 'Cancel and get the rest back',

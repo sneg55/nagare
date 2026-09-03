@@ -93,7 +93,7 @@ export function StreamDetail({ id }: { id: number }) {
         <div className="narrow stack">
           <h1>That is not a schedule id</h1>
           <p className="lead">
-            Stream ids are whole numbers counting up from 1. Check the link you followed,
+            Schedule ids are whole numbers counting up from 1. Check the link you followed,
             or find the schedule in your list.
           </p>
           <div>
@@ -317,7 +317,7 @@ export function StreamDetail({ id }: { id: number }) {
                   <p className="muted">
                     {hiddenRole
                       ? 'This browser recorded a key of yours for this schedule, derived from a wallet that is not connected right now. Connect that wallet and your role comes back.'
-                      : 'Everything on this page is public and you can read all of it, but withdrawing, cancelling, re-keying or listing takes the sender\u2019s key or the recipient\u2019s, and this browser holds neither.'}
+                      : 'Everything on this page is public, so you can read all of it. Withdrawing, cancelling, re-keying or listing needs the sender\u2019s key or the recipient\u2019s, and this browser holds neither of them.'}
                   </p>
                   {hiddenRole ? null : (
                     <p className="muted">
@@ -349,7 +349,7 @@ export function StreamDetail({ id }: { id: number }) {
                   </div>
                   {dropped ? (
                     <p className="muted" role="status">
-                      Removed. It is off your list and nothing on the contract changed.
+                      Removed from your list, which changed nothing on the contract.
                     </p>
                   ) : null}
                   {myKey ? (
@@ -388,8 +388,8 @@ export function StreamDetail({ id }: { id: number }) {
                 {due > 0n ? (
                   <div className="stack-tight">
                     <p className="muted">
-                      {toStrk(due)} STRK has vested and is yours to take. It lands in a
-                      private note, not in a visible balance.
+                      {toStrk(due)} STRK has vested and is yours to take. It arrives as a
+                      private note in the pool, so your visible balance will not move.
                     </p>
                     <div>
                       <button className="btn btn-primary" onClick={runWithdraw}>
@@ -470,7 +470,7 @@ export function StreamDetail({ id }: { id: number }) {
                 <h3>You are the sender</h3>
                 <p className="muted">
                   {canCancel(schedule, now)
-                    ? `You can cancel what has not vested, which is in this schedule\u2019s settings.`
+                    ? 'You can cancel what has not vested. The button for it is in this schedule\u2019s settings.'
                     : schedule.canceled
                       ? 'You already cancelled this schedule.'
                       : 'This schedule is fully vested, so there is nothing left to cancel.'}
@@ -508,8 +508,8 @@ export function StreamDetail({ id }: { id: number }) {
                 </label>
                 {rekeyPending ? null : (
                   <p className="muted">
-                    A Nagare key, not a wallet address. Send them this page&rsquo;s link and
-                    they can produce one from their own wallet in a click.
+                    Nagare keys are not wallet addresses. Send them this page&rsquo;s link
+                    and they can produce one from their own wallet in a click.
                   </p>
                 )}
                 {confirmTransfer ? (
@@ -557,8 +557,8 @@ export function StreamDetail({ id }: { id: number }) {
                     <strong id={`sellable-${id}`}>Open to offers</strong>
                     <p className="muted">
                       {schedule.sellable
-                        ? 'Anyone holding this schedule\u2019s id can escrow a price against it. Nothing moves until you accept.'
-                        : 'Let anyone holding this schedule\u2019s id escrow a price against it. Nothing moves until you accept.'}
+                        ? 'Anyone holding this schedule\u2019s id can escrow a price against it. The schedule stays yours until you accept one.'
+                        : 'Let anyone holding this schedule\u2019s id escrow a price against it. The schedule stays yours until you accept one.'}
                     </p>
                   </div>
                   <button
@@ -591,10 +591,10 @@ export function StreamDetail({ id }: { id: number }) {
                   </p>
                   <p className="muted">
                     Whether a schedule can be cancelled is fixed when it is opened, and no
-                    operation on the contract changes it afterwards. You cannot give this
-                    right up here, so the recipient is trusting you for as long as the
-                    schedule runs. Opening the next one uncancelable is the way to spare
-                    them that.
+                    operation on the contract changes it afterwards. You cannot give the
+                    right up here, so the recipient has to trust you for as long as the
+                    schedule runs. Open the next one uncancelable if you would rather they
+                    did not have to.
                   </p>
                   <div>
                     <button className="btn" onClick={runCancel}>
@@ -628,14 +628,14 @@ export function StreamDetail({ id }: { id: number }) {
                 </div>
               </dl>
               <p className="muted">
-                These are keys, not wallets. No address of either party appears in any
-                transaction on this schedule.
+                The sender and recipient values above are Nagare keys. No address of
+                either party appears in any transaction on this schedule.
               </p>
               {isUncancelable(schedule) ? (
                 <p className="muted">
                   The sender key here is a published constant with no private key behind
-                  it, so no signature can ever authorize a cancel. Recompute it from the
-                  contract and see for yourself.
+                  it, so no signature can ever authorize a cancel. You can recompute it
+                  from the contract yourself.
                 </p>
               ) : null}
               <p>

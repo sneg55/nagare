@@ -58,7 +58,7 @@ export default function CreatePage() {
     try {
       return toStrk(parseStrk(amount || '0') + POOL_FEE)
     } catch {
-      return '—'
+      return null
     }
   })()
 
@@ -172,7 +172,7 @@ export default function CreatePage() {
               <strong id="cancelable">You can cancel this</strong>
               <p className="muted">
                 {cancelable
-                  ? 'Until it fully vests you can cancel and take back whatever has not vested. Before the cliff that is the whole amount, so the recipient is trusting you not to.'
+                  ? 'Until it fully vests you can cancel and take back whatever has not vested. Before the cliff that is the whole amount, so the recipient has to trust that you will leave it alone.'
                   : 'Nobody can cancel it, you included. Nagare records a sender key that has no private key, and the recipient can check that on the contract for themselves.'}
               </p>
             </div>
@@ -242,7 +242,7 @@ export default function CreatePage() {
             </div>
             <div className="row">
               <dt>Leaves your shielded balance</dt>
-              <dd>{totalCost} STRK</dd>
+              <dd>{totalCost ? `${totalCost} STRK` : 'Enter a number'}</dd>
             </div>
             {shielded !== null ? (
               <div className="row">

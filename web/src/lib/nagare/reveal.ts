@@ -2,18 +2,20 @@ import type { OpName } from './actions'
 
 export const REVEAL: Record<string, string> = {
   Create:
-    'The pool paid Nagare and the amount is public. Your wallet address is not in this transaction.',
+    'The chain records the pool paying Nagare, and the amount. Your own wallet address appears nowhere in the transaction.',
   Withdraw:
-    'Nagare paid the pool, and an open note of this amount exists. Which wallet owns that note is not on chain.',
+    'Nagare paid the pool, so an open note of this amount now exists. Voyager shows that the note exists and cannot show which wallet owns it.',
   Cancel:
-    'The refund amount and the time are public. Who cancelled, and which note the refund went to, are not.',
+    'The refund amount and the time it happened both go on chain. Voyager cannot show you who cancelled, or which note took the refund.',
   Transfer:
-    'The schedule now answers to a different key. The old and new keys are public; the people behind them are not.',
-  List: 'The schedule is marked open to offers. That flag is public.',
-  Offer: 'The price, the expiry and the buyer key are public. The buyer wallet is not.',
+    'The schedule now answers to a different key. Both keys are on chain, and a key says nothing about the person holding it.',
+  List: 'The schedule is marked open to offers, and that flag is public.',
+  Offer:
+    'The price, the expiry and the buyer key all go on chain. The wallet behind that key stays inside the pool.',
   Accept:
-    'The schedule moved to a new key and the price landed in a private note. Neither party is named.',
-  Reclaim: 'The escrow returned to a private note. The buyer wallet is not named.',
+    'The schedule moved to a new key and the price landed in a private note. Voyager records a key on each side of the trade and nothing about the two people.',
+  Reclaim:
+    'The escrow returned to a private note. Anyone can read the refund off the contract without learning whose wallet it reached.',
 }
 
 export function revealFor(op: OpName): string {
@@ -37,8 +39,8 @@ export const NOT_DISCLOSED = [
 ]
 
 export const HONEST_LIMITS = [
-  'Shielding is public. Moving STRK into the pool puts your address and that amount on chain.',
-  'Amounts and timing can be correlated. A distinctive amount withdrawn shortly after a distinctive deposit is a link.',
+  'Moving STRK into the pool is a public transaction that puts your address and the amount on chain.',
+  'Amounts and timing can be correlated: a distinctive amount withdrawn shortly after a distinctive deposit is a link.',
   'A key used for two schedules links them, which is why every schedule gets a fresh sender key.',
   'The pool charges 6 STRK for each private transaction, taken from your shielded balance.',
 ]

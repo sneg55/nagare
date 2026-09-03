@@ -116,7 +116,7 @@ export default function ClaimPage() {
           <h1>This schedule has already moved on</h1>
           <p className="lead">
             The key in this link no longer controls schedule {streamId}. Whoever received it
-            has re-keyed, which is what a claim link is supposed to make possible.
+            has re-keyed, and a claim link stops working once that happens.
           </p>
           <Link href="/app/schedules" className="btn">
             Go to your schedules
@@ -157,9 +157,8 @@ export default function ClaimPage() {
                 vest on the dates above.
               </p>
               <p className="muted">
-                You do not have to take anyone&rsquo;s word for it. The contract shows the
-                sender key on this schedule, and it is the same value on every uncancelable
-                one.
+                The contract shows the sender key on this schedule, and it is the same
+                value on every uncancelable one, so you can check this yourself.
               </p>
             </>
           ) : (
@@ -172,7 +171,8 @@ export default function ClaimPage() {
               <p className="muted">
                 Nothing vests before the cliff on {when(schedule.cliff)}, so a cancel before
                 that date returns the whole {toStrk(schedule.total)} STRK to the sender and
-                leaves you nothing. Withdrawing as it vests is what limits that.
+                leaves you nothing. Withdraw as it vests and there is less for a cancel to
+                take back.
               </p>
             </>
           )}

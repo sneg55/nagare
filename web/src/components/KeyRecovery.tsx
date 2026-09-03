@@ -51,8 +51,8 @@ export function KeyRecovery({ onDone }: { onDone: () => void }) {
       <h3>Recover from your wallet</h3>
       <p className="muted">
         Keys Nagare makes are derived from your wallet, so this browser is not the only
-        place they exist. One signature rebuilds them. It moves no funds and Nagare then
-        checks every schedule on the contract for a match.
+        place they exist. One signature rebuilds them, moves no funds, and lets Nagare
+        check every schedule on the contract for a match.
       </p>
       <div className="row-actions">
         <button className="btn" onClick={() => void run()} disabled={running}>

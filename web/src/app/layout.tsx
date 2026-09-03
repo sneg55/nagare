@@ -12,7 +12,7 @@ const serif = Source_Serif_4({
 export const metadata = {
   title: 'Nagare: private vesting on Starknet',
   description:
-    'Vest tokens on Starknet without publishing your cap table. Sender and recipient are keys, not wallet addresses.',
+    'Vest tokens on Starknet without publishing your cap table. Each side of a schedule is a key, and no wallet address appears in any transaction on it.',
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

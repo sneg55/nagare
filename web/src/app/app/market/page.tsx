@@ -31,8 +31,8 @@ export default function MarketPage() {
           </p>
           <p className="muted measure-72">
             This page reads the contract. A schedule&rsquo;s amounts, dates and its
-            listing are public on chain whether or not anyone lists them here, and none of
-            it says who holds the schedule.
+            listing are public on chain whether or not anyone lists them here, and none
+            of it identifies the holder.
           </p>
         </div>
 
@@ -44,7 +44,8 @@ export default function MarketPage() {
           <div className="card card-outlined stack-tight">
             <h2>Nothing is open to offers</h2>
             <p className="muted">
-              A holder opens their schedule from its own page. Come back when one has.
+              A holder opens their schedule to offers from its own page. No one has done
+              that yet.
             </p>
           </div>
         ) : (

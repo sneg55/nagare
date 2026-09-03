@@ -20,14 +20,17 @@ export function WalletBar() {
 
   const warning = line()
 
+  const summary = () => {
+    if (!conn) return 'Browsing read-only. Connect a wallet to open or move a schedule.'
+    if (warning) return warning
+    if (shielded === null) return shortHex(conn.address)
+    return `${shortHex(conn.address)} · ${toStrk(shielded)} STRK shielded`
+  }
+
   return (
     <div className={warning ? 'walletbar walletbar-warning' : 'walletbar'}>
       <div className="wrap split align-center walletbar-inner">
-        <span className="muted">
-          {conn
-            ? warning ?? `${shortHex(conn.address)} · ${shielded !== null ? toStrk(shielded) : '—'} STRK shielded`
-            : 'Browsing read-only. Connect a wallet to open or move a schedule.'}
-        </span>
+        <span className="muted">{summary()}</span>
         <button
           className="btn btn-quiet"
           onClick={() => void (conn ? refresh() : connect())}

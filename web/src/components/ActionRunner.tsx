@@ -51,7 +51,7 @@ function humanize(raw: string): { message: string; retryable: boolean } {
   if (/note the wallet would pay into|note id/i.test(raw)) {
     return {
       message:
-        'The wallet changed the note it would pay into. Nothing was sent. Try again.',
+        'The wallet changed the note it would pay into, so nothing was sent. Try again.',
       retryable: true,
     }
   }
@@ -158,7 +158,7 @@ export function ActionStatus({ phase, op, reset }: { phase: Phase; op: OpName; r
       <div className="card card-outlined stack-tight" role="alert">
         <h3>{op} did not go through</h3>
         <p className="muted">{phase.message}</p>
-        <p className="muted">Nothing was sent, and nothing moved.</p>
+        <p className="muted">No transaction reached the chain, and your balances are unchanged.</p>
         {phase.detail && phase.detail !== phase.message ? (
           <p className="muted">The wallet said: {phase.detail}</p>
         ) : null}
