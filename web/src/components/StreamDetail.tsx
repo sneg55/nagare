@@ -30,6 +30,7 @@ import { useWallet } from './WalletProvider'
 import { useAction, ActionStatus } from './ActionRunner'
 import { watch } from '@/lib/nagare/watch'
 import { SalePanel } from './SalePanel'
+import { Modal } from './Modal'
 
 export function StreamDetail({ id }: { id: number }) {
   const { requireWallet, prepare, keyFor } = useWallet()
@@ -40,6 +41,7 @@ export function StreamDetail({ id }: { id: number }) {
   const [newKey, setNewKey] = useState('')
   const [rekeyPending, setRekeyPending] = useState<string | null>(null)
   const [confirmForget, setConfirmForget] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [keyTick, setKeyTick] = useState(0)
 
   useEffect(() => {
@@ -257,8 +259,6 @@ export function StreamDetail({ id }: { id: number }) {
 
             <ActionStatus phase={withdraw.phase} op="Withdraw" reset={withdraw.reset} />
             <ActionStatus phase={cancel.phase} op="Cancel" reset={cancel.reset} />
-            <ActionStatus phase={transfer.phase} op="Transfer" reset={transfer.reset} />
-            <ActionStatus phase={list.phase} op="List" reset={list.reset} />
 
             {movedOn ? (
               <div className="card card-outlined stack-tight">
@@ -325,8 +325,23 @@ export function StreamDetail({ id }: { id: number }) {
                 )}
 
                 {canTransfer(schedule, now, offer!) || canList(schedule, now) ? (
-                <div className="stack-tight">
-                  <h3>{rekeyPending ? 'Take control with your own key' : 'Hand it to someone else'}</h3>
+                  <div>
+                    <button className="btn btn-quiet" onClick={() => setSettingsOpen(true)}>
+                      Settings for this schedule
+                    </button>
+                  </div>
+                ) : null}
+
+                <Modal
+                  open={settingsOpen}
+                  onClose={() => setSettingsOpen(false)}
+                  title={`Schedule ${id} settings`}
+                >
+                  <ActionStatus phase={transfer.phase} op="Transfer" reset={transfer.reset} />
+                  <ActionStatus phase={list.phase} op="List" reset={list.reset} />
+
+                  <div className="stack-tight">
+                    <h3>{rekeyPending ? 'Take control with your own key' : 'Hand it to someone else'}</h3>
                   <p className="muted">
                     {rekeyPending
                       ? 'A key derived from your wallet is ready. Moving the schedule onto it means the person who sent you the claim link can no longer act as you, and your wallet can rebuild it on any device.'
@@ -378,8 +393,8 @@ export function StreamDetail({ id }: { id: number }) {
                       <span className="switch-knob" />
                     </button>
                   </div>
-                </div>
-                ) : null}
+                  </div>
+                </Modal>
               </div>
             ) : null}
 

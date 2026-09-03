@@ -315,6 +315,20 @@ button:disabled {
   text-decoration-color: var(--ink);
 }
 
+.modal {
+  width: min(560px, calc(100vw - var(--s4)));
+  max-height: calc(100vh - var(--s5));
+  padding: var(--s4);
+  border: 1px solid var(--ink);
+  border-radius: var(--r-card);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.modal::backdrop {
+  background: rgb(40 38 42 / 0.4);
+}
+
 .switch-row {
   display: flex;
   align-items: flex-start;
