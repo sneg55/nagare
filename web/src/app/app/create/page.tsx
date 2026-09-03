@@ -1,16 +1,18 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useWallet } from '@/components/WalletProvider'
 import { useAction, ActionStatus } from '@/components/ActionRunner'
 import { createActions } from '@/lib/nagare/actions'
-import { generateKeypair, saveKey } from '@/lib/nagare/keys'
-import { keyForSchedule } from '@/lib/nagare/derive'
+import { generateKeypair, loadKey, saveKey, deleteKey } from '@/lib/nagare/keys'
+import { freeSenderSlot, senderSlots } from '@/lib/nagare/derive'
+import { findCreated, usedSenderKeys } from '@/lib/nagare/recover'
+import { NO_CANCEL_KEY } from '@/lib/nagare/cancelable'
 import { streamCount } from '@/lib/nagare/read'
 import { parseStrk, toStrk } from '@/lib/nagare/format'
 import { POOL_FEE } from '@/lib/nagare/config'
-import { watch } from '@/lib/nagare/watch'
+import { markOpened, unmarkOpened, unwatch, watch } from '@/lib/nagare/watch'
 import { claimLink } from '@/lib/nagare/claim'
 import { VestingChart } from '@/components/VestingChart'
 
@@ -23,7 +25,37 @@ export default function CreatePage() {
   const [recipientKey, setRecipientKey] = useState('')
   const [mode, setMode] = useState<'link' | 'key'>('link')
   const [link, setLink] = useState<string | null>(null)
-  const { phase, run, reset } = useAction('Create')
+  const [cancelable, setCancelable] = useState(true)
+  const opened = useRef<{
+    guessedId: number
+    countBefore: number
+    senderPk: string
+    recipientPk: string
+    recipientPrivateKey: string | null
+  } | null>(null)
+
+  const place = async () => {
+    const it = opened.current
+    if (!it) return
+    const id =
+      (await findCreated(it.countBefore, it.senderPk, it.recipientPk)) ?? it.guessedId
+    if (id !== it.guessedId) {
+      for (const role of ['sender', 'recipient'] as const) {
+        const held = loadKey(`stream:${it.guessedId}:${role}`)
+        if (held) {
+          saveKey(`stream:${id}:${role}`, held)
+          deleteKey(`stream:${it.guessedId}:${role}`)
+        }
+      }
+      unwatch(it.guessedId)
+      unmarkOpened(it.guessedId)
+      watch(id)
+      markOpened(id)
+    }
+    if (it.recipientPrivateKey) setLink(claimLink(id, it.recipientPrivateKey))
+  }
+
+  const { phase, run, reset } = useAction('Create', () => void place())
 
   const totalCost = (() => {
     try {
@@ -50,32 +82,42 @@ export default function CreatePage() {
       }
 
       const now = Math.floor(Date.now() / 1000)
-      const nextId = (await streamCount()) + 1
-      const seed = await unlock()
-      const sender = keyForSchedule(seed, 'sender', nextId)
-      saveKey(`stream:${nextId}:sender`, sender)
+      const countBefore = await streamCount()
+      const guessedId = countBefore + 1
+
+      let senderPk = NO_CANCEL_KEY
+      if (cancelable) {
+        const seed = await unlock()
+        const sender = freeSenderSlot(senderSlots(seed), await usedSenderKeys())
+        saveKey(`stream:${guessedId}:sender`, sender)
+        senderPk = sender.publicKey
+      }
 
       let recipientPk = recipientKey.trim()
+      let recipientPrivateKey: string | null = null
       if (mode === 'link') {
         const recipient = generateKeypair()
-        saveKey(`stream:${nextId}:recipient`, recipient)
+        saveKey(`stream:${guessedId}:recipient`, recipient)
         recipientPk = recipient.publicKey
-        setLink(claimLink(nextId, recipient.privateKey))
+        recipientPrivateKey = recipient.privateKey
       } else if (!/^0x[0-9a-fA-F]{1,63}$/.test(recipientPk)) {
         throw new Error('That does not look like a Nagare key. It starts with 0x.')
       }
 
-      watch(nextId)
+      watch(guessedId)
+      markOpened(guessedId)
+      opened.current = { guessedId, countBefore, senderPk, recipientPk, recipientPrivateKey }
       return {
-        streamId: String(nextId),
+        streamId: String(guessedId),
         actions: createActions({
           total,
           start: now,
           cliff: now + cliffD * 86400,
           end: now + endD * 86400,
-          senderPk: sender.publicKey,
+          senderPk,
           recipientPk,
         }),
+        settled: async () => (await findCreated(countBefore, senderPk, recipientPk)) !== null,
       }
     })
   }
@@ -89,7 +131,10 @@ export default function CreatePage() {
           <h1>Open a schedule</h1>
           <p className="lead">
             The amount leaves your shielded balance now and unlocks to the recipient on
-            the schedule you set. You can cancel anything that has not vested.
+            the schedule you set.{' '}
+            {cancelable
+              ? 'You can cancel anything that has not vested.'
+              : 'Once it is funded you will not be able to take any of it back.'}
           </p>
         </div>
 
@@ -117,6 +162,28 @@ export default function CreatePage() {
             onCliffDays={(d) => setCliffDays(String(d))}
             onEndDays={(d) => setEndDays(String(d))}
           />
+
+          <div className="switch-row">
+            <div className="stack-tight">
+              <strong id="cancelable">You can cancel this</strong>
+              <p className="muted">
+                {cancelable
+                  ? 'Until it fully vests you can cancel and take back whatever has not vested. Before the cliff that is the whole amount, so the recipient is trusting you not to.'
+                  : 'Nobody can cancel it, you included. Nagare records a sender key that has no private key, and the recipient can check that on the contract for themselves.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              className="switch"
+              aria-checked={cancelable}
+              aria-labelledby="cancelable"
+              onClick={() => setCancelable((v) => !v)}
+              disabled={busy}
+            >
+              <span className="switch-knob" />
+            </button>
+          </div>
 
           <div className="stack-tight">
             <span className="muted">Who receives it</span>
@@ -176,10 +243,12 @@ export default function CreatePage() {
           </dl>
 
           <p className="muted">
+            {cancelable
+              ? 'Your sender key comes from your wallet, so you can rebuild it there. Funding asks for one signature to derive it, then the transaction itself.'
+              : 'There is no sender key to keep, so funding is the transaction alone.'}{' '}
             {mode === 'link'
-              ? 'Your sender key comes from your wallet, so you can rebuild it there. The recipient\u2019s key is made in this browser and rides in the link, and whoever holds that link holds the schedule until they re-key.'
-              : 'Your sender key comes from your wallet, so you can rebuild it there. The recipient already holds their own key.'}{' '}
-            Funding asks for one signature to derive the key, then the transaction itself.
+              ? 'The recipient\u2019s key is made in this browser and rides in the link, and whoever holds that link holds the schedule until they re-key.'
+              : 'The recipient already holds their own key.'}
           </p>
 
           <div>

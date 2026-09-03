@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { getStream, type Stream } from '@/lib/nagare/read'
-import { watched, watch } from '@/lib/nagare/watch'
+import { watched, watch, openedHere } from '@/lib/nagare/watch'
 import { statusOf, STATUS_LABEL, progress, claimableFraction, withdrawableAt } from '@/lib/nagare/status'
 import { toStrk, when } from '@/lib/nagare/format'
 import { Meter } from '@/components/Meter'
@@ -25,7 +25,16 @@ export default function SchedulesPage() {
         const schedule = await getStream(id)
         const hasSender = !!loadKey(`stream:${id}:sender`)
         const hasRecipient = !!loadKey(`stream:${id}:recipient`)
-        const role = hasSender && hasRecipient ? 'You hold both keys' : hasSender ? 'You are the sender' : hasRecipient ? 'You are the recipient' : 'Watching'
+        const role =
+          hasSender && hasRecipient
+            ? 'You hold both keys'
+            : hasSender
+              ? 'You are the sender'
+              : hasRecipient
+                ? 'You are the recipient'
+                : openedHere(id)
+                  ? 'You opened this'
+                  : 'Watching'
         return { id, schedule, role }
       }),
     )

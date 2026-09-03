@@ -6,6 +6,7 @@ import { TopBar } from '@/components/TopBar'
 import { parseClaim } from '@/lib/nagare/claim'
 import { saveKey, publicKeyOf } from '@/lib/nagare/keys'
 import { keyForSchedule } from '@/lib/nagare/derive'
+import { isUncancelable } from '@/lib/nagare/cancelable'
 import { useWallet } from '@/components/WalletProvider'
 import { getStream, type Stream } from '@/lib/nagare/read'
 import { watch } from '@/lib/nagare/watch'
@@ -134,6 +135,44 @@ export default function ClaimPage() {
             Schedule {streamId} unlocks from {when(schedule.cliff)} and finishes{' '}
             {when(schedule.end)}. The key from this link is now saved in this browser.
           </p>
+        </div>
+
+        <div
+          className={isUncancelable(schedule) ? 'card card-outlined stack-tight' : 'card card-cream stack-tight'}
+        >
+          <h3>
+            {isUncancelable(schedule)
+              ? 'The sender cannot take this back'
+              : 'The sender can cancel this'}
+          </h3>
+          {isUncancelable(schedule) ? (
+            <>
+              <p className="muted">
+                This schedule was opened with no sender key. Nagare recorded a published
+                constant in its place, and no private key exists for it, so no signature
+                can ever authorize a cancel. The whole {toStrk(schedule.total)} STRK will
+                vest on the dates above.
+              </p>
+              <p className="muted">
+                You do not have to take anyone&rsquo;s word for it. The contract shows the
+                sender key on this schedule, and it is the same value on every uncancelable
+                one.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="muted">
+                Until it fully vests on {when(schedule.end)}, the sender can cancel and take
+                back whatever has not vested by then. What has already vested stays yours to
+                withdraw.
+              </p>
+              <p className="muted">
+                Nothing vests before the cliff on {when(schedule.cliff)}, so a cancel before
+                that date returns the whole {toStrk(schedule.total)} STRK to the sender and
+                leaves you nothing. Withdrawing as it vests is what limits that.
+              </p>
+            </>
+          )}
         </div>
 
         <div className="card card-cream">

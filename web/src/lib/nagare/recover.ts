@@ -1,5 +1,5 @@
 import { getStream, streamCount } from './read'
-import { keyForInvite, keyForSchedule, sameKey, INVITE_INDEX_SPAN } from './derive'
+import { keyForInvite, keyForSchedule, sameKey, senderSlots, INVITE_INDEX_SPAN } from './derive'
 import { saveKey } from './keys'
 import { watch } from './watch'
 
@@ -13,6 +13,7 @@ export async function recoverFromSeed(
 ): Promise<Found[]> {
   const total = await streamCount()
   const invites = Array.from({ length: INVITE_INDEX_SPAN }, (_, i) => keyForInvite(seed, i))
+  const senders = senderSlots(seed)
   const found: Found[] = []
 
   for (let from = 1; from <= total; from += BATCH) {
@@ -24,8 +25,8 @@ export async function recoverFromSeed(
       const s = schedules[i]
       if (!s.exists) return
 
-      const sender = keyForSchedule(seed, 'sender', id)
-      if (sameKey(sender.publicKey, s.senderPk)) {
+      const sender = senders.find((k) => sameKey(k.publicKey, s.senderPk))
+      if (sender) {
         saveKey(`stream:${id}:sender`, sender)
         watch(id)
         found.push({ id, role: 'sender' })
@@ -45,4 +46,31 @@ export async function recoverFromSeed(
   }
 
   return found
+}
+
+export async function usedSenderKeys(): Promise<string[]> {
+  const total = await streamCount()
+  const keys: string[] = []
+  for (let from = 1; from <= total; from += BATCH) {
+    const ids: number[] = []
+    for (let id = from; id < from + BATCH && id <= total; id += 1) ids.push(id)
+    const schedules = await Promise.all(ids.map((id) => getStream(id)))
+    schedules.forEach((s) => {
+      if (s.exists) keys.push(s.senderPk)
+    })
+  }
+  return keys
+}
+
+export async function findCreated(
+  countBefore: number,
+  senderPk: string,
+  recipientPk: string,
+): Promise<number | null> {
+  const total = await streamCount()
+  for (let id = countBefore + 1; id <= total; id += 1) {
+    const s = await getStream(id)
+    if (s.exists && sameKey(s.senderPk, senderPk) && sameKey(s.recipientPk, recipientPk)) return id
+  }
+  return null
 }

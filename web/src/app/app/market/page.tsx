@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { Meter } from '@/components/Meter'
 import { listedSchedules, type Listing } from '@/lib/nagare/market'
 import { toStrk, when } from '@/lib/nagare/format'
+import { isUncancelable } from '@/lib/nagare/cancelable'
 import { STATUS_LABEL, claimableFraction, offerStatusOf, progress, statusOf } from '@/lib/nagare/status'
 
 export default function MarketPage() {
@@ -84,6 +85,10 @@ export default function MarketPage() {
                     <div className="row">
                       <dt>Fully vested</dt>
                       <dd>{when(schedule.end)}</dd>
+                    </div>
+                    <div className="row">
+                      <dt>Sender can cancel</dt>
+                      <dd>{isUncancelable(schedule) ? 'No' : 'Yes'}</dd>
                     </div>
                     {live ? (
                       <div className="row">

@@ -28,6 +28,7 @@ export const SEED_MESSAGE = {
 }
 
 export const INVITE_INDEX_SPAN = 32
+export const SENDER_SLOT_SPAN = 32
 
 function felts(sig: unknown): string[] {
   const hex = (v: unknown) => num.toHex(BigInt(v as string))
@@ -56,6 +57,31 @@ export function keyForSchedule(seed: string, role: Role, streamId: number): Keyp
       num.toHex(streamId),
     ]),
   )
+}
+
+export function keyForSender(seed: string, slot: number): Keypair {
+  return keyFrom(
+    hash.computePoseidonHashOnElements([
+      seed,
+      shortString.encodeShortString('sender-slot'),
+      num.toHex(slot),
+    ]),
+  )
+}
+
+export function senderSlots(seed: string): Keypair[] {
+  return Array.from({ length: SENDER_SLOT_SPAN }, (_, i) => keyForSender(seed, i))
+}
+
+export function freeSenderSlot(slots: Keypair[], taken: string[]): Keypair {
+  const used = new Set(taken.map((pk) => BigInt(pk)))
+  const free = slots.find((k) => !used.has(BigInt(k.publicKey)))
+  if (!free) {
+    throw new Error(
+      `This wallet has opened ${SENDER_SLOT_SPAN} schedules, which is as many as one signature can rebuild.`,
+    )
+  }
+  return free
 }
 
 export function keyForInvite(seed: string, index: number): Keypair {

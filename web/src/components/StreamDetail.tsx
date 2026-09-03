@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { getStream, getOffer, type Stream, type Offer } from '@/lib/nagare/read'
 import { loadKey, publicKeyOf, saveKey, deleteKey } from '@/lib/nagare/keys'
 import { claimLink } from '@/lib/nagare/claim'
+import { isUncancelable } from '@/lib/nagare/cancelable'
+import { openedHere } from '@/lib/nagare/watch'
 import { buildPayout } from '@/lib/nagare/flow'
 import { keyedActions, signKeyed } from '@/lib/nagare/actions'
 import {
@@ -338,7 +340,7 @@ export function StreamDetail({ id }: { id: number }) {
               </div>
             ) : null}
 
-            {isSender && isRecipient && recipientKey ? (
+            {openedHere(id) && isRecipient && recipientKey ? (
               <div className="card card-outlined stack-tight">
                 <h3>You still hold the recipient&rsquo;s key</h3>
                 <p className="muted">
@@ -427,6 +429,10 @@ export function StreamDetail({ id }: { id: number }) {
               <h3>What this schedule shows publicly</h3>
               <dl className="rows">
                 <div className="row">
+                  <dt>Sender can cancel</dt>
+                  <dd>{isUncancelable(schedule) ? 'No' : 'Yes'}</dd>
+                </div>
+                <div className="row">
                   <dt>Sender key</dt>
                   <dd>{shortHex(schedule.senderPk)}</dd>
                 </div>
@@ -443,6 +449,13 @@ export function StreamDetail({ id }: { id: number }) {
                 These are keys, not wallets. No address of either party appears in any
                 transaction on this schedule.
               </p>
+              {isUncancelable(schedule) ? (
+                <p className="muted">
+                  The sender key here is a published constant with no private key behind
+                  it, so no signature can ever authorize a cancel. Recompute it from the
+                  contract and see for yourself.
+                </p>
+              ) : null}
               <p>
                 <a href={`${VOYAGER}/contract/${NAGARE_PADDED}`} target="_blank" rel="noreferrer">
                   Verify on Voyager

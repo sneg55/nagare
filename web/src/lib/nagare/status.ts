@@ -1,4 +1,5 @@
 import type { Stream, Offer } from './read'
+import { isUncancelable } from './cancelable'
 
 export type StreamStatus =
   | 'canceled-settled'
@@ -65,7 +66,7 @@ export function canWithdraw(s: Stream, now: number): boolean {
 }
 
 export function canCancel(s: Stream, now: number): boolean {
-  return s.exists && !s.canceled && now < s.end
+  return s.exists && !s.canceled && now < s.end && !isUncancelable(s)
 }
 
 export function canTransfer(s: Stream, now: number, offer: Offer): boolean {

@@ -1,4 +1,5 @@
 import { NAGARE, POOL, STRK } from '../src/lib/nagare/config'
+import { NO_CANCEL_KEY } from '../src/lib/nagare/cancelable'
 import { createActions, keyedActions, offerActions, payoutActions } from '../src/lib/nagare/actions'
 
 const FELT = /^0x(0|[a-fA-F1-9]{1}[a-fA-F0-9]{0,62})$/
@@ -10,7 +11,7 @@ function checkFelt(where: string, v: string) {
   if (!FELT.test(v)) bad.push(`${where}: ${v}`)
 }
 
-for (const [name, v] of Object.entries({ NAGARE, POOL, STRK })) checkFelt(`config.${name}`, v)
+for (const [name, v] of Object.entries({ NAGARE, POOL, STRK, NO_CANCEL_KEY })) checkFelt(`config.${name}`, v)
 
 const create = createActions({
   total: 10n ** 18n,
