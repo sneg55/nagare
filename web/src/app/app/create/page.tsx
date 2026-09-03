@@ -6,6 +6,7 @@ import { useWallet } from '@/components/WalletProvider'
 import { useAction, ActionStatus } from '@/components/ActionRunner'
 import { createActions } from '@/lib/nagare/actions'
 import { generateKeypair, saveKey } from '@/lib/nagare/keys'
+import { keyForSchedule } from '@/lib/nagare/derive'
 import { streamCount } from '@/lib/nagare/read'
 import { parseStrk, toStrk } from '@/lib/nagare/format'
 import { POOL_FEE } from '@/lib/nagare/config'
@@ -14,7 +15,7 @@ import { claimLink } from '@/lib/nagare/claim'
 import { VestingChart } from '@/components/VestingChart'
 
 export default function CreatePage() {
-  const { shielded, conn } = useWallet()
+  const { shielded, conn, unlock } = useWallet()
   const router = useRouter()
   const [amount, setAmount] = useState('100')
   const [cliffDays, setCliffDays] = useState('90')
@@ -50,7 +51,8 @@ export default function CreatePage() {
 
       const now = Math.floor(Date.now() / 1000)
       const nextId = (await streamCount()) + 1
-      const sender = generateKeypair()
+      const seed = await unlock()
+      const sender = keyForSchedule(seed, 'sender', nextId)
       saveKey(`stream:${nextId}:sender`, sender)
 
       let recipientPk = recipientKey.trim()
@@ -174,9 +176,10 @@ export default function CreatePage() {
           </dl>
 
           <p className="muted">
-            The recipient&rsquo;s key is generated in this browser and stored only here.
-            There is no recovery: back it up from your schedules page once this one
-            exists, or losing this browser loses it.
+            {mode === 'link'
+              ? 'Your sender key comes from your wallet, so you can rebuild it there. The recipient\u2019s key is made in this browser and rides in the link, and whoever holds that link holds the schedule until they re-key.'
+              : 'Your sender key comes from your wallet, so you can rebuild it there. The recipient already holds their own key.'}{' '}
+            Funding asks for one signature to derive the key, then the transaction itself.
           </p>
 
           <div>

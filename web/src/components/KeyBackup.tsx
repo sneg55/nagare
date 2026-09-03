@@ -32,9 +32,11 @@ export function KeyBackup() {
 
   if (!open) {
     return (
-      <button className="btn btn-quiet" onClick={() => setOpen(true)}>
-        Back up your keys
-      </button>
+      <div>
+        <button className="btn btn-quiet" onClick={() => setOpen(true)}>
+          Back up your keys
+        </button>
+      </div>
     )
   }
 
@@ -44,7 +46,7 @@ export function KeyBackup() {
       <p className="muted">
         {count === 0
           ? 'This browser holds no schedule keys yet.'
-          : `This browser holds ${count} ${count === 1 ? 'key' : 'keys'}. They exist nowhere else. Clearing your site data without a copy of this file makes every schedule they control unreachable, by you or by anyone.`}
+          : `This browser holds ${count} ${count === 1 ? 'key' : 'keys'}. Keys Nagare derived from your wallet can be rebuilt with Recover. Any key that arrived in a claim link exists only here, and clearing your site data without this file makes those schedules unreachable, by you or by anyone.`}
       </p>
       <div className="row-actions">
         <button className="btn btn-primary" onClick={download} disabled={count === 0}>

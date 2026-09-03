@@ -1,9 +1,10 @@
 'use client'
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { WALLET_API } from '@starknet-io/types-js'
 import { connectWallet, discoverWallets, type Connected } from '@/lib/nagare/wallet'
 import { readInFlight, writeInFlight, clearInFlight, type InFlight } from '@/lib/nagare/keys'
+import { deriveSeed } from '@/lib/nagare/derive'
 
 type Registration = 'unknown' | 'none' | 'unregistered' | 'registered'
 
@@ -12,6 +13,7 @@ type Ctx = {
   registration: Registration
   shielded: bigint | null
   connect: () => Promise<void>
+  unlock: () => Promise<string>
   refresh: () => Promise<void>
   submit: (op: string, streamId: string, actions: WALLET_API.STRK20_ACTION[]) => Promise<string>
   prepare: (actions: WALLET_API.STRK20_ACTION[]) => Promise<string[]>
@@ -34,6 +36,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [shielded, setShielded] = useState<bigint | null>(null)
   const [pending, setPending] = useState<InFlight | null>(null)
   const [busy, setBusy] = useState(false)
+  const seed = useRef<string | null>(null)
 
   const readBalances = useCallback(async (c: Connected) => {
     try {
@@ -66,6 +69,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setBusy(false)
     }
   }, [readBalances])
+
+  const unlock = useCallback(async () => {
+    if (seed.current) return seed.current
+    if (!conn) throw new Error('Connect a wallet first.')
+    seed.current = await deriveSeed((message) => conn.wallet.signMessage(message as never))
+    return seed.current
+  }, [conn])
 
   const refresh = useCallback(async () => {
     if (conn) await readBalances(conn)
@@ -109,8 +119,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ conn, registration, shielded, connect, refresh, submit, prepare, pending, clearPending, busy }),
-    [conn, registration, shielded, connect, refresh, submit, prepare, pending, clearPending, busy],
+    () => ({ conn, registration, shielded, connect, unlock, refresh, submit, prepare, pending, clearPending, busy }),
+    [conn, registration, shielded, connect, unlock, refresh, submit, prepare, pending, clearPending, busy],
   )
 
   return <WalletCtx.Provider value={value}>{children}</WalletCtx.Provider>

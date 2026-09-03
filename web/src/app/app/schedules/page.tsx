@@ -9,6 +9,7 @@ import { toStrk, when } from '@/lib/nagare/format'
 import { Meter } from '@/components/Meter'
 import { loadKey } from '@/lib/nagare/keys'
 import { KeyBackup } from '@/components/KeyBackup'
+import { KeyRecovery } from '@/components/KeyRecovery'
 
 type Row = { id: number; schedule: Stream; role: string }
 
@@ -105,6 +106,8 @@ export default function SchedulesPage() {
         )}
 
         <KeyBackup />
+
+        <KeyRecovery onDone={() => void load()} />
 
         <div className="card card-cream stack-tight">
           <h2>Add a schedule by id</h2>
