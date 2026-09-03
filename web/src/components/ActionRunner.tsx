@@ -14,7 +14,8 @@ export type Phase =
   | { kind: 'preparing' }
   | { kind: 'signing' }
   | { kind: 'proving' }
-  | { kind: 'confirmed'; hash?: string }
+  | { kind: 'settling'; hash?: string }
+  | { kind: 'confirmed'; hash?: string; stale?: boolean }
   | { kind: 'failed'; message: string; retryable: boolean; detail?: string }
 
 export type Build = () => Promise<{
@@ -79,6 +80,8 @@ export function useAction(op: OpName, onDone?: () => void) {
         built = await build()
         setPhase({ kind: 'proving' })
         const sent = built
+        const onChain = sent.settled
+        let seen = false
         const hash = await new Promise<string | undefined>((resolve, reject) => {
           let settledAlready = false
           const finish = (v: string | undefined) => {
@@ -92,7 +95,6 @@ export function useAction(op: OpName, onDone?: () => void) {
               reject(e)
             }
           })
-          const onChain = sent.settled
           if (!onChain) return
           void (async () => {
             for (let i = 0; i < SETTLE_TRIES && !settledAlready; i += 1) {
@@ -100,6 +102,7 @@ export function useAction(op: OpName, onDone?: () => void) {
               if (settledAlready) return
               try {
                 if (await onChain()) {
+                  seen = true
                   clearPending()
                   finish(undefined)
                   return
@@ -108,7 +111,16 @@ export function useAction(op: OpName, onDone?: () => void) {
             }
           })()
         })
-        setPhase({ kind: 'confirmed', hash })
+        if (onChain && !seen) {
+          setPhase({ kind: 'settling', hash })
+          for (let i = 0; i < SETTLE_TRIES && !seen; i += 1) {
+            try {
+              if (await onChain()) seen = true
+            } catch {}
+            if (!seen) await wait(SETTLE_EVERY)
+          }
+        }
+        setPhase({ kind: 'confirmed', hash, stale: !!onChain && !seen })
         onDone?.()
       } catch (e) {
         const raw = (e as Error).message ?? String(e)
@@ -130,8 +142,12 @@ export function ActionStatus({ phase, op, reset }: { phase: Phase; op: OpName; r
   if (phase.kind === 'confirmed') {
     return (
       <div className="card card-outlined stack-tight" role="status">
-        <h3>{op} confirmed</h3>
-        <p className="muted">{revealFor(op)}</p>
+        <h3>{phase.stale ? `${op} sent` : `${op} confirmed`}</h3>
+        <p className="muted">
+          {phase.stale
+            ? 'Your wallet accepted it, but the contract has not shown the change yet. Reload in a moment to see where it landed.'
+            : revealFor(op)}
+        </p>
         {phase.hash ? (
           <p>
             <a href={`${VOYAGER}/tx/${phase.hash}`} target="_blank" rel="noreferrer">
@@ -176,7 +192,9 @@ export function ActionStatus({ phase, op, reset }: { phase: Phase; op: OpName; r
       ? 'Working out where the payment lands'
       : phase.kind === 'signing'
         ? 'Signing with your schedule key'
-        : 'Your wallet is building the privacy proof. This takes about 30 seconds.'
+        : phase.kind === 'settling'
+          ? 'Your wallet sent it. Waiting for the contract to show the change.'
+          : 'Your wallet is building the privacy proof. This takes about 30 seconds.'
 
   return (
     <div className="card card-outlined stack-tight" role="status" aria-live="polite">
