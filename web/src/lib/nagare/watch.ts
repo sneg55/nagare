@@ -53,3 +53,30 @@ export function markOpened(id: number) {
 export function unmarkOpened(id: number) {
   window.localStorage.setItem(OPENED_KEY, JSON.stringify(readOpened().filter((x) => x !== id)))
 }
+
+const RECOVERED_KEY = 'nagare.recovered.v1'
+
+function readRecovered(): string[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(RECOVERED_KEY)
+    return raw ? (JSON.parse(raw) as string[]) : []
+  } catch {
+    return []
+  }
+}
+
+export function recovered(address: string): boolean {
+  return readRecovered().some((a) => {
+    try {
+      return BigInt(a) === BigInt(address)
+    } catch {
+      return false
+    }
+  })
+}
+
+export function markRecovered(address: string) {
+  if (recovered(address)) return
+  window.localStorage.setItem(RECOVERED_KEY, JSON.stringify([...readRecovered(), address]))
+}

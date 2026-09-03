@@ -1,24 +1,30 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { getStream, type Stream } from '@/lib/nagare/read'
-import { watched, watch, openedHere } from '@/lib/nagare/watch'
+import { watched, watch, openedHere, recovered, markRecovered } from '@/lib/nagare/watch'
 import { statusOf, STATUS_LABEL, progress, claimableFraction, withdrawableAt } from '@/lib/nagare/status'
 import { toStrk, when } from '@/lib/nagare/format'
 import { Meter } from '@/components/Meter'
 import { hasHiddenRole, publicKeyFor } from '@/lib/nagare/roles'
-import { KeyRecovery } from '@/components/KeyRecovery'
+import { useWallet } from '@/components/WalletProvider'
+import { recoverFromSeed } from '@/lib/nagare/recover'
 
 type Row = { id: number; schedule: Stream; role: string }
 
 export default function SchedulesPage() {
+  const { conn, unlock } = useWallet()
   const [rows, setRows] = useState<Row[] | null>(null)
   const [addId, setAddId] = useState('')
   const [addNote, setAddNote] = useState<string | null>(null)
+  const [scanning, setScanning] = useState(false)
+  const [scanned, setScanned] = useState<[number, number] | null>(null)
+  const [scanNote, setScanNote] = useState<string | null>(null)
+  const tried = useRef<string | null>(null)
   const now = Math.floor(Date.now() / 1000)
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const ids = watched()
     const loaded = await Promise.all(
       ids.map(async (id) => {
@@ -43,11 +49,40 @@ export default function SchedulesPage() {
       }),
     )
     setRows(loaded.filter((r) => r.schedule.exists))
-  }
+  }, [])
+
+  const scan = useCallback(
+    async (address: string) => {
+      setScanning(true)
+      setScanNote(null)
+      try {
+        const seed = await unlock()
+        const found = await recoverFromSeed(seed, (done, total) => setScanned([done, total]))
+        markRecovered(address)
+        if (found.length === 0) {
+          setScanNote('No schedule on the contract carries a key from this wallet.')
+        }
+        await load()
+      } catch (e) {
+        setScanNote((e as Error).message)
+      } finally {
+        setScanning(false)
+        setScanned(null)
+      }
+    },
+    [unlock, load],
+  )
 
   useEffect(() => {
     void load()
-  }, [])
+  }, [load])
+
+  useEffect(() => {
+    if (!conn || tried.current === conn.address) return
+    if (watched().length > 0 || recovered(conn.address)) return
+    tried.current = conn.address
+    void scan(conn.address)
+  }, [conn, scan])
 
   if (rows === null) {
     return (
@@ -64,8 +99,7 @@ export default function SchedulesPage() {
           <div className="stack-tight">
             <h1>Your schedules</h1>
             <p className="muted">
-              Schedules you opened are here. If this browser is new to you, rebuild them
-              from your wallet, or add one by id if someone handed you the number.
+              Every schedule your wallet holds a key for, plus any you are watching.
             </p>
           </div>
           <Link href="/app/create" className="btn btn-primary">
@@ -75,11 +109,24 @@ export default function SchedulesPage() {
 
         {rows.length === 0 ? (
           <div className="card card-outlined stack-tight">
-            <h2>Nothing here yet</h2>
+            <h2>{scanning ? 'Looking for your schedules' : 'Nothing here yet'}</h2>
             <p className="muted">
-              Open a schedule to vest tokens to someone, or add one by its id if you were
-              given it.
+              {scanning
+                ? 'Nagare is rebuilding your keys from that signature and checking every schedule on the contract for a match.'
+                : conn
+                  ? 'Open a schedule to vest tokens to someone, or add one by its id if you were given the number.'
+                  : 'Connect your wallet and Nagare will rebuild your keys and find the schedules that carry them.'}
             </p>
+            {scanned ? (
+              <p className="muted" role="status">
+                Read {scanned[0]} of {scanned[1]} schedules.
+              </p>
+            ) : null}
+            {scanNote ? (
+              <p className="muted" role="status">
+                {scanNote}
+              </p>
+            ) : null}
           </div>
         ) : (
           <div className="grid-cards">
@@ -117,15 +164,21 @@ export default function SchedulesPage() {
           </div>
         )}
 
-        <KeyRecovery onDone={() => void load()} />
-
         <div className="card card-cream stack-tight">
-          <h2>Add a schedule by id</h2>
+          <h2>Missing one?</h2>
           <p className="muted">
-            If someone gave you a schedule id, put it here to watch it. You will need the
-            matching key to do anything with it.
+            Nagare checks the contract for your keys the first time you connect on a
+            browser. Check again if a schedule was transferred to you since, or watch one
+            by id to follow a schedule you hold no key for.
           </p>
           <div className="row-actions">
+            <button
+              className="btn"
+              onClick={() => conn && void scan(conn.address)}
+              disabled={!conn || scanning}
+            >
+              {scanning ? 'Checking the contract…' : 'Check for my schedules again'}
+            </button>
             <label className="field field-narrow">
               <span className="visually-hidden">Schedule id</span>
               <input
@@ -137,7 +190,7 @@ export default function SchedulesPage() {
               />
             </label>
             <button
-              className="btn"
+              className="btn btn-quiet"
               onClick={() => {
                 void (async () => {
                   const n = Number(addId)
@@ -158,9 +211,15 @@ export default function SchedulesPage() {
                 })()
               }}
             >
-              Watch it
+              Watch by id
             </button>
           </div>
+          {rows.length > 0 && scanned ? (
+            <p className="muted" role="status">
+              Read {scanned[0]} of {scanned[1]} schedules.
+            </p>
+          ) : null}
+          {rows.length > 0 && scanNote ? <p role="status">{scanNote}</p> : null}
           {addNote ? <p role="status">{addNote}</p> : null}
         </div>
       </div>
