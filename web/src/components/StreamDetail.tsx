@@ -157,6 +157,8 @@ export function StreamDetail({ id }: { id: number }) {
       return { streamId: String(id), actions: keyedActions('Transfer', id, target, sig) }
     })
 
+  const listBusy = list.phase.kind !== 'idle' && list.phase.kind !== 'failed' && list.phase.kind !== 'confirmed'
+
   const runList = (enable: boolean) =>
     void list.run(async () => {
       if (!recipientKey) throw new Error('You do not hold the recipient key for this schedule.')
@@ -289,19 +291,34 @@ export function StreamDetail({ id }: { id: number }) {
                     >
                       {rekeyPending ? 'Move it onto my key' : 'Transfer this schedule'}
                     </button>
-                    <button
-                      className="btn btn-quiet"
-                      onClick={() => runList(!schedule.sellable)}
-                      disabled={!canList(schedule, now)}
-                    >
-                      {schedule.sellable ? 'Take it off the market' : 'Open it to offers'}
-                    </button>
                   </div>
                   {offerStatus === 'live' ? (
                     <p className="muted">
                       A live offer blocks a transfer. Accept it or wait for it to expire.
                     </p>
                   ) : null}
+
+                  <div className="switch-row">
+                    <div className="stack-tight">
+                      <strong id={`sellable-${id}`}>Open to offers</strong>
+                      <p className="muted">
+                        {schedule.sellable
+                          ? 'Anyone holding this schedule\u2019s id can escrow a price against it. Nothing moves until you accept.'
+                          : 'Let anyone holding this schedule\u2019s id escrow a price against it. Nothing moves until you accept.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      className="switch"
+                      aria-checked={schedule.sellable}
+                      aria-labelledby={`sellable-${id}`}
+                      onClick={() => runList(!schedule.sellable)}
+                      disabled={!canList(schedule, now) || listBusy}
+                    >
+                      <span className="switch-knob" />
+                    </button>
+                  </div>
                 </div>
                 ) : null}
               </div>

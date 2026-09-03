@@ -315,6 +315,50 @@ button:disabled {
   text-decoration-color: var(--ink);
 }
 
+.switch-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding-top: var(--s2);
+  border-top: 1px solid var(--fog);
+}
+
+.switch {
+  flex: none;
+  width: 52px;
+  height: 30px;
+  padding: 3px;
+  border: 1px solid var(--ink);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.switch:disabled {
+  cursor: not-allowed;
+  border-color: var(--edge);
+  opacity: 0.5;
+}
+
+.switch[aria-checked='true'] {
+  background: var(--sky);
+}
+
+.switch-knob {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  transition: transform 120ms ease;
+}
+
+.switch[aria-checked='true'] .switch-knob {
+  transform: translateX(22px);
+}
+
 .rows {
   display: grid;
   margin: 0;

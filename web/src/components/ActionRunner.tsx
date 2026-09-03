@@ -15,7 +15,7 @@ export type Phase =
   | { kind: 'signing' }
   | { kind: 'proving' }
   | { kind: 'confirmed'; hash: string }
-  | { kind: 'failed'; message: string; retryable: boolean }
+  | { kind: 'failed'; message: string; retryable: boolean; detail?: string }
 
 export type Build = () => Promise<{ actions: WALLET_API.STRK20_ACTION[]; streamId: string }>
 
@@ -56,6 +56,7 @@ export function useAction(op: OpName, onDone?: () => void) {
   const run = useCallback(
     async (build: Build) => {
       setPhase({ kind: 'preparing' })
+      let built: Awaited<ReturnType<Build>> | null = null
       try {
         if (!conn) throw new Error('Connect a wallet to do this.')
         if (registration === 'unregistered') {
@@ -66,13 +67,15 @@ export function useAction(op: OpName, onDone?: () => void) {
             `The pool charges ${toStrk(POOL_FEE)} STRK per transaction and you have ${toStrk(shielded)} shielded. Shield more in Ready.`,
           )
         }
-        const { actions, streamId } = await build()
+        built = await build()
         setPhase({ kind: 'proving' })
-        const hash = await submit(op, streamId, actions)
+        const hash = await submit(op, built.streamId, built.actions)
         setPhase({ kind: 'confirmed', hash })
         onDone?.()
       } catch (e) {
-        setPhase({ kind: 'failed', ...humanize((e as Error).message ?? String(e)) })
+        const raw = (e as Error).message ?? String(e)
+        console.error('[nagare]', op, 'failed', { raw, error: e, actions: built?.actions })
+        setPhase({ kind: 'failed', ...humanize(raw), detail: raw })
       }
     },
     [op, submit, onDone, conn, registration, shielded],
@@ -111,6 +114,9 @@ export function ActionStatus({ phase, op, reset }: { phase: Phase; op: OpName; r
         <h3>{op} did not go through</h3>
         <p className="muted">{phase.message}</p>
         <p className="muted">Nothing was sent, and nothing moved.</p>
+        {phase.detail && phase.detail !== phase.message ? (
+          <p className="muted">The wallet said: {phase.detail}</p>
+        ) : null}
         <div>
           <button className="btn btn-quiet" onClick={reset}>
             {phase.retryable ? 'Try again' : 'Dismiss'}
