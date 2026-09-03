@@ -127,6 +127,7 @@ export function StreamDetail({ id }: { id: number }) {
       return {
         streamId: String(id),
         actions: await buildPayout('Withdraw', schedule, id, recipientKey.privateKey, conn.address, prepare),
+        settled: nonceMoves,
       }
     })
 
@@ -136,6 +137,7 @@ export function StreamDetail({ id }: { id: number }) {
       return {
         streamId: String(id),
         actions: await buildPayout('Cancel', schedule, id, senderKey.privateKey, conn.address, prepare),
+        settled: nonceMoves,
       }
     })
 
@@ -155,8 +157,14 @@ export function StreamDetail({ id }: { id: number }) {
         arg: target,
         streamNonce: schedule.nonce,
       })
-      return { streamId: String(id), actions: keyedActions('Transfer', id, target, conn.address, sig) }
+      return {
+        streamId: String(id),
+        actions: keyedActions('Transfer', id, target, conn.address, sig),
+        settled: nonceMoves,
+      }
     })
+
+  const nonceMoves = async () => (await getStream(id)).nonce !== schedule.nonce
 
   const listBusy = list.phase.kind !== 'idle' && list.phase.kind !== 'failed' && list.phase.kind !== 'confirmed'
 
@@ -171,7 +179,11 @@ export function StreamDetail({ id }: { id: number }) {
         arg,
         streamNonce: schedule.nonce,
       })
-      return { streamId: String(id), actions: keyedActions('List', id, arg, conn.address, sig) }
+      return {
+        streamId: String(id),
+        actions: keyedActions('List', id, arg, conn.address, sig),
+        settled: nonceMoves,
+      }
     })
 
   return (

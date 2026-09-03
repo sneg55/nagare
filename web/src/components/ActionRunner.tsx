@@ -14,10 +14,19 @@ export type Phase =
   | { kind: 'preparing' }
   | { kind: 'signing' }
   | { kind: 'proving' }
-  | { kind: 'confirmed'; hash: string }
+  | { kind: 'confirmed'; hash?: string }
   | { kind: 'failed'; message: string; retryable: boolean; detail?: string }
 
-export type Build = () => Promise<{ actions: WALLET_API.STRK20_ACTION[]; streamId: string }>
+export type Build = () => Promise<{
+  actions: WALLET_API.STRK20_ACTION[]
+  streamId: string
+  settled?: () => Promise<boolean>
+}>
+
+const SETTLE_EVERY = 5000
+const SETTLE_TRIES = 36
+
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 const RETRYABLE = [
   /USER_REFUSED_OP/,
@@ -50,7 +59,7 @@ function humanize(raw: string): { message: string; retryable: boolean } {
 }
 
 export function useAction(op: OpName, onDone?: () => void) {
-  const { submit, conn, registration, shielded } = useWallet()
+  const { submit, conn, registration, shielded, clearPending } = useWallet()
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' })
 
   const run = useCallback(
@@ -69,7 +78,36 @@ export function useAction(op: OpName, onDone?: () => void) {
         }
         built = await build()
         setPhase({ kind: 'proving' })
-        const hash = await submit(op, built.streamId, built.actions)
+        const sent = built
+        const hash = await new Promise<string | undefined>((resolve, reject) => {
+          let settledAlready = false
+          const finish = (v: string | undefined) => {
+            if (settledAlready) return
+            settledAlready = true
+            resolve(v)
+          }
+          submit(op, sent.streamId, sent.actions).then(finish, (e) => {
+            if (!settledAlready) {
+              settledAlready = true
+              reject(e)
+            }
+          })
+          const onChain = sent.settled
+          if (!onChain) return
+          void (async () => {
+            for (let i = 0; i < SETTLE_TRIES && !settledAlready; i += 1) {
+              await wait(SETTLE_EVERY)
+              if (settledAlready) return
+              try {
+                if (await onChain()) {
+                  clearPending()
+                  finish(undefined)
+                  return
+                }
+              } catch {}
+            }
+          })()
+        })
         setPhase({ kind: 'confirmed', hash })
         onDone?.()
       } catch (e) {
@@ -78,7 +116,7 @@ export function useAction(op: OpName, onDone?: () => void) {
         setPhase({ kind: 'failed', ...humanize(raw), detail: raw })
       }
     },
-    [op, submit, onDone, conn, registration, shielded],
+    [op, submit, onDone, conn, registration, shielded, clearPending],
   )
 
   const reset = useCallback(() => setPhase({ kind: 'idle' }), [])
@@ -94,11 +132,18 @@ export function ActionStatus({ phase, op, reset }: { phase: Phase; op: OpName; r
       <div className="card card-outlined stack-tight" role="status">
         <h3>{op} confirmed</h3>
         <p className="muted">{revealFor(op)}</p>
-        <p>
-          <a href={`${VOYAGER}/tx/${phase.hash}`} target="_blank" rel="noreferrer">
-            View on Voyager
-          </a>
-        </p>
+        {phase.hash ? (
+          <p>
+            <a href={`${VOYAGER}/tx/${phase.hash}`} target="_blank" rel="noreferrer">
+              View on Voyager
+            </a>
+          </p>
+        ) : (
+          <p className="muted">
+            The contract already shows the change. Your wallet had not handed back a
+            transaction hash yet, so there is no link to it here.
+          </p>
+        )}
         <div>
           <button className="btn btn-quiet" onClick={reset}>
             Dismiss

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { Stream, Offer } from '@/lib/nagare/read'
+import { getOffer, getStream, type Stream, type Offer } from '@/lib/nagare/read'
 import { offerActions } from '@/lib/nagare/actions'
 import { buildPayout } from '@/lib/nagare/flow'
 import { generateKeypair, saveKey, loadKey, publicKeyOf } from '@/lib/nagare/keys'
@@ -52,6 +52,7 @@ export function SalePanel({
       return {
         streamId: String(id),
         actions: offerActions(id, buyer.publicKey, amount, now + h * 3600),
+        settled: async () => (await getOffer(id)).generation > offer.generation,
       }
     })
 
@@ -70,6 +71,7 @@ export function SalePanel({
           prepare,
           offer.generation,
         ),
+        settled: async () => (await getStream(id)).nonce !== schedule.nonce,
       }
     })
 
@@ -87,6 +89,7 @@ export function SalePanel({
           prepare,
           offer.generation,
         ),
+        settled: async () => !(await getOffer(id)).live,
       }
     })
 
