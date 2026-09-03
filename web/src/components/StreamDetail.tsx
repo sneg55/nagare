@@ -31,6 +31,7 @@ import { useAction, ActionStatus } from './ActionRunner'
 import { watch } from '@/lib/nagare/watch'
 import { SalePanel } from './SalePanel'
 import { Modal } from './Modal'
+import { Gear } from './Gear'
 
 export function StreamDetail({ id }: { id: number }) {
   const { requireWallet, prepare, keyFor } = useWallet()
@@ -220,9 +221,20 @@ export function StreamDetail({ id }: { id: number }) {
             <div className="card card-cream">
               <div className="stack">
                 <div className="stack-tight">
-                  <span className="muted">
-                    {isRecipient ? 'Available to withdraw now' : 'Vested and not yet withdrawn'}
-                  </span>
+                  <div className="split align-center">
+                    <span className="muted">
+                      {isRecipient ? 'Available to withdraw now' : 'Vested and not yet withdrawn'}
+                    </span>
+                    {isRecipient || isSender ? (
+                      <button
+                        className="icon-btn"
+                        aria-label={`Settings for schedule ${id}`}
+                        onClick={() => setSettingsOpen(true)}
+                      >
+                        <Gear />
+                      </button>
+                    ) : null}
+                  </div>
                   <p className="amount amount-lg">{toStrk(due)} STRK</p>
                 </div>
                 <Meter withdrawn={progress(schedule, now)} claimable={claimableFraction(schedule, now)} label="Vesting progress" />
@@ -258,7 +270,6 @@ export function StreamDetail({ id }: { id: number }) {
             </div>
 
             <ActionStatus phase={withdraw.phase} op="Withdraw" reset={withdraw.reset} />
-            <ActionStatus phase={cancel.phase} op="Cancel" reset={cancel.reset} />
 
             {movedOn ? (
               <div className="card card-outlined stack-tight">
@@ -324,77 +335,6 @@ export function StreamDetail({ id }: { id: number }) {
                   </p>
                 )}
 
-                {canTransfer(schedule, now, offer!) || canList(schedule, now) ? (
-                  <div>
-                    <button className="btn btn-quiet" onClick={() => setSettingsOpen(true)}>
-                      Settings for this schedule
-                    </button>
-                  </div>
-                ) : null}
-
-                <Modal
-                  open={settingsOpen}
-                  onClose={() => setSettingsOpen(false)}
-                  title={`Schedule ${id} settings`}
-                >
-                  <ActionStatus phase={transfer.phase} op="Transfer" reset={transfer.reset} />
-                  <ActionStatus phase={list.phase} op="List" reset={list.reset} />
-
-                  <div className="stack-tight">
-                    <h3>{rekeyPending ? 'Take control with your own key' : 'Hand it to someone else'}</h3>
-                  <p className="muted">
-                    {rekeyPending
-                      ? 'A key derived from your wallet is ready. Moving the schedule onto it means the person who sent you the claim link can no longer act as you, and your wallet can rebuild it on any device.'
-                      : 'Re-key this schedule to a new holder. Your key stops working the moment it lands.'}
-                  </p>
-                  <label className="field">
-                    <span className="visually-hidden">
-                      {rekeyPending ? 'Your new Nagare key' : 'The new holder\u2019s Nagare key'}
-                    </span>
-                    <input
-                      value={newKey}
-                      onChange={(e) => setNewKey(e.target.value)}
-                      placeholder="Their Nagare key, 0x…"
-                    />
-                  </label>
-                  <div className="row-actions">
-                    <button
-                      className={rekeyPending ? 'btn btn-primary' : 'btn'}
-                      onClick={runTransfer}
-                      disabled={!canTransfer(schedule, now, offer!)}
-                    >
-                      {rekeyPending ? 'Move it onto my key' : 'Transfer this schedule'}
-                    </button>
-                  </div>
-                  {offerStatus === 'live' ? (
-                    <p className="muted">
-                      A live offer blocks a transfer. Accept it or wait for it to expire.
-                    </p>
-                  ) : null}
-
-                  <div className="switch-row">
-                    <div className="stack-tight">
-                      <strong id={`sellable-${id}`}>Open to offers</strong>
-                      <p className="muted">
-                        {schedule.sellable
-                          ? 'Anyone holding this schedule\u2019s id can escrow a price against it. Nothing moves until you accept.'
-                          : 'Let anyone holding this schedule\u2019s id escrow a price against it. Nothing moves until you accept.'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      className="switch"
-                      aria-checked={schedule.sellable}
-                      aria-labelledby={`sellable-${id}`}
-                      onClick={() => runList(!schedule.sellable)}
-                      disabled={!canList(schedule, now) || listBusy}
-                    >
-                      <span className="switch-knob" />
-                    </button>
-                  </div>
-                  </div>
-                </Modal>
               </div>
             ) : null}
 
@@ -458,28 +398,103 @@ export function StreamDetail({ id }: { id: number }) {
             {isSender ? (
               <div className="card card-outlined stack-tight">
                 <h3>You are the sender</h3>
-                {canCancel(schedule, now) ? (
-                  <>
-                    <p className="muted">
-                      Cancelling returns {toStrk(refundIfCanceledNow(schedule, now))} STRK to
-                      you privately. The {toStrk(schedule.total - refundIfCanceledNow(schedule, now) - schedule.withdrawn)}{' '}
-                      STRK already vested stays claimable by the recipient.
-                    </p>
-                    <div>
-                      <button className="btn" onClick={runCancel}>
-                        Cancel this schedule
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <p className="muted">
-                    {schedule.canceled
+                <p className="muted">
+                  {canCancel(schedule, now)
+                    ? `You can cancel what has not vested, which is in this schedule\u2019s settings.`
+                    : schedule.canceled
                       ? 'You already cancelled this schedule.'
                       : 'This schedule is fully vested, so there is nothing left to cancel.'}
-                  </p>
-                )}
+                </p>
               </div>
             ) : null}
+
+            <Modal
+              open={settingsOpen}
+              onClose={() => setSettingsOpen(false)}
+              title={`Schedule ${id} settings`}
+            >
+              <ActionStatus phase={transfer.phase} op="Transfer" reset={transfer.reset} />
+              <ActionStatus phase={list.phase} op="List" reset={list.reset} />
+              <ActionStatus phase={cancel.phase} op="Cancel" reset={cancel.reset} />
+
+              {isRecipient && (canTransfer(schedule, now, offer!) || canList(schedule, now)) ? (
+                <div className="stack-tight">
+                  <h3>{rekeyPending ? 'Take control with your own key' : 'Hand it to someone else'}</h3>
+                <p className="muted">
+                  {rekeyPending
+                    ? 'A key derived from your wallet is ready. Moving the schedule onto it means the person who sent you the claim link can no longer act as you, and your wallet can rebuild it on any device.'
+                    : 'Re-key this schedule to a new holder. Your key stops working the moment it lands.'}
+                </p>
+                <label className="field">
+                  <span className="visually-hidden">
+                    {rekeyPending ? 'Your new Nagare key' : 'The new holder\u2019s Nagare key'}
+                  </span>
+                  <input
+                    value={newKey}
+                    onChange={(e) => setNewKey(e.target.value)}
+                    placeholder="Their Nagare key, 0x…"
+                  />
+                </label>
+                <div className="row-actions">
+                  <button
+                    className={rekeyPending ? 'btn btn-primary' : 'btn'}
+                    onClick={runTransfer}
+                    disabled={!canTransfer(schedule, now, offer!)}
+                  >
+                    {rekeyPending ? 'Move it onto my key' : 'Transfer this schedule'}
+                  </button>
+                </div>
+                {offerStatus === 'live' ? (
+                  <p className="muted">
+                    A live offer blocks a transfer. Accept it or wait for it to expire.
+                  </p>
+                ) : null}
+
+                <div className="switch-row">
+                  <div className="stack-tight">
+                    <strong id={`sellable-${id}`}>Open to offers</strong>
+                    <p className="muted">
+                      {schedule.sellable
+                        ? 'Anyone holding this schedule\u2019s id can escrow a price against it. Nothing moves until you accept.'
+                        : 'Let anyone holding this schedule\u2019s id escrow a price against it. Nothing moves until you accept.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    className="switch"
+                    aria-checked={schedule.sellable}
+                    aria-labelledby={`sellable-${id}`}
+                    onClick={() => runList(!schedule.sellable)}
+                    disabled={!canList(schedule, now) || listBusy}
+                  >
+                    <span className="switch-knob" />
+                  </button>
+                </div>
+                </div>
+              ) : null}
+
+              {isSender && canCancel(schedule, now) ? (
+                <div
+                  className={
+                    isRecipient ? 'stack-tight modal-section' : 'stack-tight'
+                  }
+                >
+                  <h3>Cancel this schedule</h3>
+                  <p className="muted">
+                    Cancelling returns {toStrk(refundIfCanceledNow(schedule, now))} STRK to
+                    you privately. The{' '}
+                    {toStrk(schedule.total - refundIfCanceledNow(schedule, now) - schedule.withdrawn)}{' '}
+                    STRK already vested stays claimable by the recipient.
+                  </p>
+                  <div>
+                    <button className="btn" onClick={runCancel}>
+                      Cancel this schedule
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </Modal>
           </div>
 
           <aside className="stack">

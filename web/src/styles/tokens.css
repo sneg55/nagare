@@ -315,6 +315,31 @@ button:disabled {
   text-decoration-color: var(--ink);
 }
 
+.modal-section {
+  padding-top: var(--s2);
+  border-top: 1px solid var(--fog);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--graphite);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.icon-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
 .modal {
   width: min(560px, calc(100vw - var(--s4)));
   max-height: calc(100vh - var(--s5));
