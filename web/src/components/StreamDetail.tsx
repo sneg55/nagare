@@ -268,7 +268,7 @@ export function StreamDetail({ id }: { id: number }) {
                   <h3>{rekeyPending ? 'Take control with your own key' : 'Hand it to someone else'}</h3>
                   <p className="muted">
                     {rekeyPending
-                      ? 'A fresh key is ready in this browser. Moving the schedule onto it means the person who sent you the claim link can no longer act as you.'
+                      ? 'A key derived from your wallet is ready. Moving the schedule onto it means the person who sent you the claim link can no longer act as you, and your wallet can rebuild it on any device.'
                       : 'Re-key this schedule to a new holder. Your key stops working the moment it lands.'}
                   </p>
                   <label className="field">

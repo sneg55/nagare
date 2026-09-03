@@ -8,7 +8,6 @@ import { statusOf, STATUS_LABEL, progress, claimableFraction, withdrawableAt } f
 import { toStrk, when } from '@/lib/nagare/format'
 import { Meter } from '@/components/Meter'
 import { loadKey } from '@/lib/nagare/keys'
-import { KeyBackup } from '@/components/KeyBackup'
 import { KeyRecovery } from '@/components/KeyRecovery'
 
 type Row = { id: number; schedule: Stream; role: string }
@@ -52,8 +51,8 @@ export default function SchedulesPage() {
           <div className="stack-tight">
             <h1>Your schedules</h1>
             <p className="muted">
-              This list lives in this browser. A schedule you were handed by id or by link
-              shows up here once you add it.
+              Schedules you opened are here. If this browser is new to you, rebuild them
+              from your wallet, or add one by id if someone handed you the number.
             </p>
           </div>
           <Link href="/app/create" className="btn btn-primary">
@@ -104,8 +103,6 @@ export default function SchedulesPage() {
             })}
           </div>
         )}
-
-        <KeyBackup />
 
         <KeyRecovery onDone={() => void load()} />
 

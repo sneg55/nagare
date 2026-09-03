@@ -19,7 +19,7 @@ export function KeyRecovery({ onDone }: { onDone: () => void }) {
       const found = await recoverFromSeed(seed, (done, total) => setScanned([done, total]))
       if (found.length === 0) {
         setNote(
-          'No schedule on the contract matches a key from this wallet. Schedules you were handed by a claim link, or opened before Nagare derived keys, are not in the wallet: restore those from a backup file.',
+          'No schedule on the contract matches a key from this wallet. A schedule you were handed by a claim link is not in the wallet until you re-key it: open it in the browser that took the link, or ask the sender to send it again.',
         )
       } else {
         const ids = [...new Set(found.map((f) => f.id))].sort((a, b) => a - b)

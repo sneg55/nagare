@@ -54,19 +54,6 @@ export function deleteKey(id: string) {
   write(store)
 }
 
-export function allKeys(): KeyStore {
-  return read()
-}
-
-export function exportKeys(): string {
-  return JSON.stringify(read())
-}
-
-export function importKeys(blob: string) {
-  const parsed = JSON.parse(blob) as KeyStore
-  write({ ...read(), ...parsed })
-}
-
 const IN_FLIGHT_KEY = 'nagare.inflight.v1'
 
 export type InFlight = { op: string; streamId: string; at: number }

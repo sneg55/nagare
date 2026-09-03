@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { TopBar } from '@/components/TopBar'
 import { parseClaim } from '@/lib/nagare/claim'
-import { saveKey, publicKeyOf, generateKeypair } from '@/lib/nagare/keys'
+import { saveKey, publicKeyOf } from '@/lib/nagare/keys'
+import { keyForSchedule } from '@/lib/nagare/derive'
+import { useWallet } from '@/components/WalletProvider'
 import { getStream, type Stream } from '@/lib/nagare/read'
 import { watch } from '@/lib/nagare/watch'
 import { toStrk, when } from '@/lib/nagare/format'
@@ -17,6 +19,9 @@ type State =
 
 export default function ClaimPage() {
   const [state, setState] = useState<State>({ kind: 'reading' })
+  const { conn, connect, unlock } = useWallet()
+  const [keying, setKeying] = useState(false)
+  const [keyNote, setKeyNote] = useState<string | null>(null)
 
   useEffect(() => {
     const parsed = parseClaim(window.location.hash)
@@ -79,6 +84,25 @@ export default function ClaimPage() {
 
   const { streamId, schedule, mine } = state
 
+  const makeMyKey = async () => {
+    setKeying(true)
+    setKeyNote(null)
+    try {
+      if (!conn) {
+        await connect()
+        setKeyNote('Wallet connected. Press the button again to derive your key.')
+        return
+      }
+      const seed = await unlock()
+      saveKey(`stream:${streamId}:rekey-target`, keyForSchedule(seed, 'recipient', streamId))
+      window.location.href = `/app/schedules/${streamId}`
+    } catch (e) {
+      setKeyNote((e as Error).message)
+    } finally {
+      setKeying(false)
+    }
+  }
+
   if (!mine) {
     return (
       <>
@@ -116,37 +140,34 @@ export default function ClaimPage() {
           <div className="stack-tight">
             <h3>Take control of it first</h3>
             <p className="muted">
-              The person who sent this link generated your key, so until you replace it,
-              they can act as you. Making a fresh key on this device is one transaction and
-              closes that gap.
+              The person who sent this link generated your key, so until you replace it
+              they can act as you, and so can anyone else the link reached. Your own key
+              comes from your wallet: one signature to derive it, one transaction to move
+              the schedule onto it.
             </p>
             <p className="muted">
-              Nothing forces you to. If you trust the sender and want to leave it, the
-              schedule still pays out to this key.
+              That also makes the schedule yours to reopen anywhere. The key in this link
+              lives in this browser alone, and clearing your site data before you re-key
+              puts the schedule out of reach.
             </p>
             <div className="row-actions">
-              <Link href={`/app/schedules/${streamId}`} className="btn btn-primary">
-                Open the schedule
-              </Link>
               <button
-                className="btn"
-                onClick={() => {
-                  saveKey(`stream:${streamId}:rekey-target`, generateKeypair())
-                  window.location.href = `/app/schedules/${streamId}`
-                }}
+                className="btn btn-primary"
+                onClick={() => void makeMyKey()}
+                disabled={keying}
               >
-                Make me a fresh key
+                {keying ? 'Deriving your key…' : conn ? 'Make me a key from my wallet' : 'Connect a wallet'}
               </button>
+              <Link href={`/app/schedules/${streamId}`} className="btn">
+                Leave the sender&rsquo;s key for now
+              </Link>
             </div>
+            {keyNote ? (
+              <p className="muted" role="status">
+                {keyNote}
+              </p>
+            ) : null}
           </div>
-        </div>
-
-        <div className="card card-outlined stack-tight">
-          <h3>Back this key up now</h3>
-          <p className="muted">
-            It lives only in this browser and there is no recovery. Clear your site data
-            without a backup and the schedule is unreachable, by you or anyone.
-          </p>
         </div>
       </div>
     </main>

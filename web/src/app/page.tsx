@@ -89,8 +89,9 @@ export default function Landing() {
             ))}
             <div className="row">
               <dt>
-                Your keys live in this browser. There is no recovery: back them up, or a
-                lost key loses the schedule.
+                Your keys come from your wallet, and one signature rebuilds them on any
+                device. A key that arrives in a claim link is the exception: it lives in
+                that browser alone until the recipient re-keys.
               </dt>
             </div>
             <div className="row">
