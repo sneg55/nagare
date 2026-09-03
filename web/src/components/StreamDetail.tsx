@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { getStream, getOffer, type Stream, type Offer } from '@/lib/nagare/read'
 import { loadKey } from '@/lib/nagare/keys'
 import { forgetRole, moveRole, publicKeyFor, roleEntry } from '@/lib/nagare/roles'
-import { sameKey } from '@/lib/nagare/derive'
+import { keyForRecipient, sameKey } from '@/lib/nagare/derive'
 import { claimLink } from '@/lib/nagare/claim'
 import { isUncancelable } from '@/lib/nagare/cancelable'
 import { openedHere } from '@/lib/nagare/watch'
@@ -34,7 +34,7 @@ import { Modal } from './Modal'
 import { Gear } from './Gear'
 
 export function StreamDetail({ id }: { id: number }) {
-  const { requireWallet, prepare, keyFor } = useWallet()
+  const { requireWallet, prepare, keyFor, unlock } = useWallet()
   const valid = Number.isInteger(id) && id > 0
   const [schedule, setSchedule] = useState<Stream | null>(null)
   const [offer, setOffer] = useState<Offer | null>(null)
@@ -43,6 +43,22 @@ export function StreamDetail({ id }: { id: number }) {
   const [rekeyPending, setRekeyPending] = useState<string | null>(null)
   const [confirmForget, setConfirmForget] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [confirmTransfer, setConfirmTransfer] = useState(false)
+  const [myKey, setMyKey] = useState<string | null>(null)
+  const [myKeyNote, setMyKeyNote] = useState<string | null>(null)
+  const [showingKey, setShowingKey] = useState(false)
+
+  const showMyKey = async () => {
+    setShowingKey(true)
+    setMyKeyNote(null)
+    try {
+      setMyKey(keyForRecipient(await unlock(), id).publicKey)
+    } catch (e) {
+      setMyKeyNote((e as Error).message)
+    } finally {
+      setShowingKey(false)
+    }
+  }
   const [keyTick, setKeyTick] = useState(0)
 
   useEffect(() => {
@@ -303,11 +319,40 @@ export function StreamDetail({ id }: { id: number }) {
                     schedules page, or open the claim link that carries the
                     recipient&rsquo;s key.
                   </p>
-                  <div>
-                    <Link href="/app/schedules" className="btn">
+                  <div className="row-actions">
+                    <button className="btn" onClick={() => void showMyKey()} disabled={showingKey}>
+                      {showingKey ? 'Deriving\u2026' : 'Show my Nagare key for this schedule'}
+                    </button>
+                    <Link href="/app/schedules" className="btn btn-quiet">
                       Go to your schedules
                     </Link>
                   </div>
+                  {myKey ? (
+                    <div className="stack-tight">
+                      <label className="field">
+                        <span>Your Nagare key for schedule {id}</span>
+                        <input readOnly value={myKey} onFocus={(e) => e.currentTarget.select()} />
+                      </label>
+                      <div>
+                        <button
+                          className="btn"
+                          onClick={() => void navigator.clipboard.writeText(myKey)}
+                        >
+                          Copy key
+                        </button>
+                      </div>
+                      <p className="muted">
+                        Send this to whoever holds the schedule. It is a public key and
+                        gives away nothing on its own. Once they transfer to it, Recover on
+                        your schedules page picks the schedule up.
+                      </p>
+                    </div>
+                  ) : null}
+                  {myKeyNote ? (
+                    <p className="muted" role="status">
+                      {myKeyNote}
+                    </p>
+                  ) : null}
                 </div>
               )
             ) : null}
@@ -426,23 +471,55 @@ export function StreamDetail({ id }: { id: number }) {
                     : 'Re-key this schedule to a new holder. Your key stops working the moment it lands.'}
                 </p>
                 <label className="field">
-                  <span className="visually-hidden">
-                    {rekeyPending ? 'Your new Nagare key' : 'The new holder\u2019s Nagare key'}
-                  </span>
+                  <span>{rekeyPending ? 'Your new Nagare key' : 'Their Nagare key'}</span>
                   <input
                     value={newKey}
-                    onChange={(e) => setNewKey(e.target.value)}
-                    placeholder="Their Nagare key, 0x…"
+                    onChange={(e) => {
+                      setNewKey(e.target.value)
+                      setConfirmTransfer(false)
+                    }}
+                    placeholder="0x…"
                   />
                 </label>
+                {rekeyPending ? null : (
+                  <p className="muted">
+                    A Nagare key, not a wallet address. Send them this page&rsquo;s link and
+                    they can produce one from their own wallet in a click.
+                  </p>
+                )}
+                {confirmTransfer ? (
+                  <p className="muted" role="alert">
+                    Schedule {id} moves to that key and yours stops working the moment it
+                    lands. A wallet address cannot sign for anything, so if that is not a
+                    Nagare key the schedule becomes unreachable by everyone. Check it
+                    against what they sent you.
+                  </p>
+                ) : null}
                 <div className="row-actions">
-                  <button
-                    className={rekeyPending ? 'btn btn-primary' : 'btn'}
-                    onClick={runTransfer}
-                    disabled={!canTransfer(schedule, now, offer!)}
-                  >
-                    {rekeyPending ? 'Move it onto my key' : 'Transfer this schedule'}
-                  </button>
+                  {confirmTransfer ? (
+                    <>
+                      <button
+                        className="btn"
+                        onClick={() => {
+                          setConfirmTransfer(false)
+                          runTransfer()
+                        }}
+                      >
+                        Yes, transfer it
+                      </button>
+                      <button className="btn btn-quiet" onClick={() => setConfirmTransfer(false)}>
+                        Keep it
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className={rekeyPending ? 'btn btn-primary' : 'btn'}
+                      onClick={() => (rekeyPending ? runTransfer() : setConfirmTransfer(true))}
+                      disabled={!canTransfer(schedule, now, offer!) || !newKey.trim()}
+                    >
+                      {rekeyPending ? 'Move it onto my key' : 'Transfer this schedule'}
+                    </button>
+                  )}
                 </div>
                 {offerStatus === 'live' ? (
                   <p className="muted">
