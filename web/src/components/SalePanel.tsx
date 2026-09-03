@@ -99,8 +99,12 @@ export function SalePanel({
       }
     })
 
-  if (!schedule.sellable && status !== 'live') {
-    return isRecipient ? null : (
+  const pendingOffer = status === 'live' || status === 'expired'
+
+  if (isRecipient && !pendingOffer) return null
+
+  if (!pendingOffer && !schedule.sellable) {
+    return (
       <div className="card card-outlined stack-tight">
         <h3>Not for sale</h3>
         <p className="muted">
@@ -112,7 +116,7 @@ export function SalePanel({
 
   return (
     <div className="card card-outlined stack">
-      <h3>{status === 'live' ? 'There is an offer on this schedule' : 'Buy this position'}</h3>
+      <h3>{status === 'live' ? 'There is an offer on this schedule' : 'Buy this schedule'}</h3>
 
       <ActionStatus phase={makeOffer.phase} op="Offer" reset={makeOffer.reset} />
       <ActionStatus phase={accept.phase} op="Accept" reset={accept.reset} />
@@ -133,7 +137,7 @@ export function SalePanel({
             </div>
           </dl>
           <p className="muted">
-            The price is already escrowed in the contract. Accepting moves the position to
+            The price is already escrowed in the contract. Accepting moves the schedule to
             the buyer&rsquo;s key and pays you in the same transaction.
           </p>
           {isRecipient ? (
@@ -177,7 +181,7 @@ export function SalePanel({
         <div className="stack-tight">
           <p className="muted">
             Offering escrows your STRK in the contract now. If the holder accepts, the
-            position becomes yours; if they do not, you take it back.
+            schedule becomes yours; if they do not, you take it back.
           </p>
           <div className="two-up">
             <label className="field">
@@ -197,12 +201,6 @@ export function SalePanel({
         </div>
       ) : null}
 
-      {status !== 'live' && isRecipient ? (
-        <p className="muted">
-          This schedule is open to offers. Anyone holding its id can escrow a price against
-          it, and you decide whether to take it.
-        </p>
-      ) : null}
     </div>
   )
 }

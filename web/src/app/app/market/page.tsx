@@ -32,7 +32,7 @@ export default function MarketPage() {
           <p className="muted measure-72">
             This page reads the contract. A schedule&rsquo;s amounts, dates and its
             listing are public on chain whether or not anyone lists them here, and none of
-            it says who holds the position.
+            it says who holds the schedule.
           </p>
         </div>
 

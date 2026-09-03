@@ -59,7 +59,7 @@ export default function Landing() {
                 d: 'The unvested part returns to you privately. What already vested stays claimable by the recipient.',
               },
               {
-                t: 'Hand the position over',
+                t: 'Hand the schedule over',
                 d: 'Re-key a schedule to a new holder, or list it and sell it. The escrow settles in one transaction.',
               },
             ].map((c) => (

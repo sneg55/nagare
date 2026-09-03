@@ -12,7 +12,7 @@ export const REVEAL: Record<string, string> = {
   List: 'The schedule is marked open to offers. That flag is public.',
   Offer: 'The price, the expiry and the buyer key are public. The buyer wallet is not.',
   Accept:
-    'The position moved to a new key and the price landed in a private note. Neither party is named.',
+    'The schedule moved to a new key and the price landed in a private note. Neither party is named.',
   Reclaim: 'The escrow returned to a private note. The buyer wallet is not named.',
 }
 
