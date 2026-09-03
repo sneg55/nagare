@@ -4,11 +4,11 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getStream, getOffer, type Stream, type Offer } from '@/lib/nagare/read'
 import { loadKey } from '@/lib/nagare/keys'
-import { forgetRole, moveRole, publicKeyFor, roleEntry } from '@/lib/nagare/roles'
+import { forgetRole, hasHiddenRole, moveRole, publicKeyFor, roleEntry } from '@/lib/nagare/roles'
 import { keyForRecipient, sameKey } from '@/lib/nagare/derive'
 import { claimLink } from '@/lib/nagare/claim'
 import { isUncancelable } from '@/lib/nagare/cancelable'
-import { openedHere } from '@/lib/nagare/watch'
+import { openedHere, unwatch, watched } from '@/lib/nagare/watch'
 import { buildPayout } from '@/lib/nagare/flow'
 import { keyedActions, signKeyed } from '@/lib/nagare/actions'
 import {
@@ -28,7 +28,6 @@ import { NAGARE_PADDED, VOYAGER } from '@/lib/nagare/config'
 import { Meter } from './Meter'
 import { useWallet } from './WalletProvider'
 import { useAction, ActionStatus } from './ActionRunner'
-import { watch } from '@/lib/nagare/watch'
 import { SalePanel } from './SalePanel'
 import { Modal } from './Modal'
 import { Gear } from './Gear'
@@ -47,6 +46,7 @@ export function StreamDetail({ id }: { id: number }) {
   const [myKey, setMyKey] = useState<string | null>(null)
   const [myKeyNote, setMyKeyNote] = useState<string | null>(null)
   const [showingKey, setShowingKey] = useState(false)
+  const [dropped, setDropped] = useState(false)
 
   const showMyKey = async () => {
     setShowingKey(true)
@@ -74,7 +74,6 @@ export function StreamDetail({ id }: { id: number }) {
     const [s, o] = await Promise.all([getStream(id), getOffer(id)])
     setSchedule(s)
     setOffer(o)
-    if (s.exists) watch(id)
   }, [id, valid])
 
   useEffect(() => {
@@ -138,6 +137,8 @@ export function StreamDetail({ id }: { id: number }) {
   const isRecipient = !!heldRecipientPk && sameKey(heldRecipientPk, schedule.recipientPk)
   const isSender = !!heldSenderPk && sameKey(heldSenderPk, schedule.senderPk)
   const movedOn = !!heldRecipientPk && !isRecipient
+  const hiddenRole =
+    hasHiddenRole(`stream:${id}:sender`) || hasHiddenRole(`stream:${id}:recipient`)
   const linkKey =
     isRecipient && roleEntry(`stream:${id}:recipient`)?.source.kind === 'stored'
       ? loadKey(`stream:${id}:recipient`)
@@ -308,25 +309,49 @@ export function StreamDetail({ id }: { id: number }) {
                 </div>
               ) : (
                 <div className="card card-outlined stack-tight">
-                  <h3>You hold no key for this schedule</h3>
+                  <h3>
+                    {hiddenRole
+                      ? 'Connect your wallet to use your key'
+                      : 'You hold no key for this schedule'}
+                  </h3>
                   <p className="muted">
-                    Everything on this page is public and you can read all of it, but
-                    withdrawing, cancelling, re-keying or listing takes the sender&rsquo;s
-                    key or the recipient&rsquo;s, and this browser holds neither.
+                    {hiddenRole
+                      ? 'This browser recorded a key of yours for this schedule, derived from a wallet that is not connected right now. Connect that wallet and your role comes back.'
+                      : 'Everything on this page is public and you can read all of it, but withdrawing, cancelling, re-keying or listing takes the sender\u2019s key or the recipient\u2019s, and this browser holds neither.'}
                   </p>
-                  <p className="muted">
-                    If it should be yours, rebuild your keys from your wallet on the
-                    schedules page, or open the claim link that carries the
-                    recipient&rsquo;s key.
-                  </p>
+                  {hiddenRole ? null : (
+                    <p className="muted">
+                      If it should be yours, rebuild your keys from your wallet on the
+                      schedules page, or open the claim link that carries the
+                      recipient&rsquo;s key.
+                    </p>
+                  )}
                   <div className="row-actions">
-                    <button className="btn" onClick={() => void showMyKey()} disabled={showingKey}>
-                      {showingKey ? 'Deriving\u2026' : 'Show my Nagare key for this schedule'}
-                    </button>
+                    {hiddenRole ? null : (
+                      <button className="btn" onClick={() => void showMyKey()} disabled={showingKey}>
+                        {showingKey ? 'Deriving\u2026' : 'Show my Nagare key for this schedule'}
+                      </button>
+                    )}
                     <Link href="/app/schedules" className="btn btn-quiet">
                       Go to your schedules
                     </Link>
+                    {!hiddenRole && !dropped && watched().includes(id) ? (
+                      <button
+                        className="btn btn-quiet"
+                        onClick={() => {
+                          unwatch(id)
+                          setDropped(true)
+                        }}
+                      >
+                        Remove from my schedules
+                      </button>
+                    ) : null}
                   </div>
+                  {dropped ? (
+                    <p className="muted" role="status">
+                      Removed. It is off your list and nothing on the contract changed.
+                    </p>
+                  ) : null}
                   {myKey ? (
                     <div className="stack-tight">
                       <label className="field">

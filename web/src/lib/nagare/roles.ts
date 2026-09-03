@@ -23,7 +23,6 @@ function sameAddress(a: string | null | undefined, b: string | null | undefined)
 
 function visible(entry: RoleEntry): boolean {
   if (entry.source.kind === 'stored') return true
-  if (!activeWallet) return true
   return sameAddress(entry.owner, activeWallet)
 }
 
@@ -55,6 +54,11 @@ export function roleEntry(id: string): RoleEntry | undefined {
   if (known) return visible(known) ? known : undefined
   const held = loadKey(id)
   return held ? { publicKey: held.publicKey, source: { kind: 'stored' } } : undefined
+}
+
+export function hasHiddenRole(id: string): boolean {
+  const known = read()[id]
+  return !!known && !visible(known)
 }
 
 export function publicKeyFor(id: string): string | undefined {

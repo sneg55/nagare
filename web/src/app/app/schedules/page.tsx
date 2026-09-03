@@ -7,7 +7,7 @@ import { watched, watch, openedHere } from '@/lib/nagare/watch'
 import { statusOf, STATUS_LABEL, progress, claimableFraction, withdrawableAt } from '@/lib/nagare/status'
 import { toStrk, when } from '@/lib/nagare/format'
 import { Meter } from '@/components/Meter'
-import { publicKeyFor } from '@/lib/nagare/roles'
+import { hasHiddenRole, publicKeyFor } from '@/lib/nagare/roles'
 import { KeyRecovery } from '@/components/KeyRecovery'
 
 type Row = { id: number; schedule: Stream; role: string }
@@ -25,6 +25,8 @@ export default function SchedulesPage() {
         const schedule = await getStream(id)
         const hasSender = !!publicKeyFor(`stream:${id}:sender`)
         const hasRecipient = !!publicKeyFor(`stream:${id}:recipient`)
+        const hidden =
+          hasHiddenRole(`stream:${id}:sender`) || hasHiddenRole(`stream:${id}:recipient`)
         const role =
           hasSender && hasRecipient
             ? 'You hold both keys'
@@ -32,9 +34,11 @@ export default function SchedulesPage() {
               ? 'You are the sender'
               : hasRecipient
                 ? 'You are the recipient'
-                : openedHere(id)
-                  ? 'You opened this'
-                  : 'Watching'
+                : hidden
+                  ? 'Connect your wallet to see your role'
+                  : openedHere(id)
+                    ? 'You opened this'
+                    : 'Watching'
         return { id, schedule, role }
       }),
     )
