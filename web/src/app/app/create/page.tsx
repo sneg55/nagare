@@ -190,21 +190,27 @@ export default function CreatePage() {
           </div>
 
           <div className="stack-tight">
-            <span className="muted">Who receives it</span>
-            <div className="row-actions" role="group" aria-label="Who receives it">
+            <span className="muted">How the recipient gets their key</span>
+            <div
+              className="row-actions"
+              role="radiogroup"
+              aria-label="How the recipient gets their key"
+            >
               <button
                 className={mode === 'link' ? 'btn btn-selected' : 'btn'}
+                role="radio"
+                aria-checked={mode === 'link'}
                 onClick={() => setMode('link')}
-                aria-pressed={mode === 'link'}
               >
-                Send them a claim link
+                A claim link
               </button>
               <button
                 className={mode === 'key' ? 'btn btn-selected' : 'btn'}
+                role="radio"
+                aria-checked={mode === 'key'}
                 onClick={() => setMode('key')}
-                aria-pressed={mode === 'key'}
               >
-                They gave me a key
+                Their own key
               </button>
             </div>
             {mode === 'key' ? (
