@@ -18,7 +18,11 @@ export function setActiveWallet(address: string | null) {
 
 function sameAddress(a: string | null | undefined, b: string | null | undefined): boolean {
   if (!a || !b) return false
-  return BigInt(a) === BigInt(b)
+  try {
+    return BigInt(a) === BigInt(b)
+  } catch {
+    return false
+  }
 }
 
 function visible(entry: RoleEntry): boolean {
@@ -79,6 +83,22 @@ export function moveRole(from: string, to: string) {
   saveRole(to, entry)
   if (held) saveKey(to, held)
   forgetRole(from)
+}
+
+export function promoteOfferKey(streamId: number, recipientPk: string): boolean {
+  const held = roleEntry(`stream:${streamId}:recipient`)
+  if (held && sameAddress(held.publicKey, recipientPk)) return false
+  const prefix = `stream:${streamId}:offer:`
+  for (const [id, entry] of Object.entries(read())) {
+    if (!id.startsWith(prefix) || !id.endsWith(':buyer')) continue
+    if (!visible(entry) || !sameAddress(entry.publicKey, recipientPk)) continue
+    saveRole(`stream:${streamId}:recipient`, {
+      publicKey: entry.publicKey,
+      source: entry.source,
+    })
+    return true
+  }
+  return false
 }
 
 export function keypairFor(id: string, entry: RoleEntry, seed: string | null): Keypair {

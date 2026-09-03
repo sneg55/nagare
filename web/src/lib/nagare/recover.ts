@@ -1,9 +1,16 @@
-import { getStream, streamCount } from './read'
-import { keyForInvite, keyForRecipient, sameKey, senderSlots, INVITE_INDEX_SPAN } from './derive'
+import { getOffer, getStream, streamCount } from './read'
+import {
+  keyForInvite,
+  keyForOffer,
+  keyForRecipient,
+  sameKey,
+  senderSlots,
+  INVITE_INDEX_SPAN,
+} from './derive'
 import { saveRole } from './roles'
 import { watch } from './watch'
 
-export type Found = { id: number; role: 'sender' | 'recipient' }
+export type Found = { id: number; role: 'sender' | 'recipient' | 'buyer' }
 
 const BATCH = 8
 
@@ -17,9 +24,11 @@ export async function recoverFromSeed(
   const found: Found[] = []
 
   for (let from = 1; from <= total; from += BATCH) {
-    const ids = []
+    const ids: number[] = []
     for (let id = from; id < from + BATCH && id <= total; id += 1) ids.push(id)
     const schedules = await Promise.all(ids.map((id) => getStream(id)))
+
+    const unclaimed: { id: number; recipientPk: string }[] = []
 
     ids.forEach((id, i) => {
       const s = schedules[i]
@@ -51,7 +60,31 @@ export async function recoverFromSeed(
         })
         watch(id)
         found.push({ id, role: 'recipient' })
+      } else {
+        unclaimed.push({ id, recipientPk: s.recipientPk })
       }
+    })
+
+    const offers = await Promise.all(unclaimed.map(({ id }) => getOffer(id)))
+    unclaimed.forEach(({ id, recipientPk }, i) => {
+      const o = offers[i]
+      if (o.generation === 0n) return
+      const generation = o.generation.toString()
+      const buyer = keyForOffer(seed, id, generation)
+      const bought = sameKey(buyer.publicKey, recipientPk)
+      if (!bought && !sameKey(buyer.publicKey, o.buyerPk)) return
+      saveRole(`stream:${id}:offer:${generation}:buyer`, {
+        publicKey: buyer.publicKey,
+        source: { kind: 'offer', streamId: id, generation },
+      })
+      if (bought) {
+        saveRole(`stream:${id}:recipient`, {
+          publicKey: buyer.publicKey,
+          source: { kind: 'offer', streamId: id, generation },
+        })
+      }
+      watch(id)
+      found.push({ id, role: bought ? 'recipient' : 'buyer' })
     })
 
     onProgress?.(Math.min(from + BATCH - 1, total), total)

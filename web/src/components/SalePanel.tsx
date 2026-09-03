@@ -6,6 +6,7 @@ import { offerActions } from '@/lib/nagare/actions'
 import { buildPayout } from '@/lib/nagare/flow'
 import { keyForOffer } from '@/lib/nagare/derive'
 import { publicKeyFor, saveRole } from '@/lib/nagare/roles'
+import { watch } from '@/lib/nagare/watch'
 import { parseStrk, toStrk, when, until } from '@/lib/nagare/format'
 import { offerStatusOf, canList } from '@/lib/nagare/status'
 import { MAX_OFFER_HOURS } from '@/lib/nagare/config'
@@ -53,6 +54,7 @@ export function SalePanel({
         publicKey: buyer.publicKey,
         source: { kind: 'offer', streamId: id, generation },
       })
+      watch(id)
       return {
         streamId: String(id),
         actions: offerActions(id, buyer.publicKey, amount, now + h * 3600),

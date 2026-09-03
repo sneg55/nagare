@@ -4,7 +4,14 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getStream, getOffer, type Stream, type Offer } from '@/lib/nagare/read'
 import { loadKey } from '@/lib/nagare/keys'
-import { forgetRole, hasHiddenRole, moveRole, publicKeyFor, roleEntry } from '@/lib/nagare/roles'
+import {
+  forgetRole,
+  hasHiddenRole,
+  moveRole,
+  promoteOfferKey,
+  publicKeyFor,
+  roleEntry,
+} from '@/lib/nagare/roles'
 import { keyForRecipient, sameKey } from '@/lib/nagare/derive'
 import { claimLink } from '@/lib/nagare/claim'
 import { isUncancelable } from '@/lib/nagare/cancelable'
@@ -72,6 +79,7 @@ export function StreamDetail({ id }: { id: number }) {
   const load = useCallback(async () => {
     if (!valid) return
     const [s, o] = await Promise.all([getStream(id), getOffer(id)])
+    if (s.exists) promoteOfferKey(id, s.recipientPk)
     setSchedule(s)
     setOffer(o)
   }, [id, valid])
