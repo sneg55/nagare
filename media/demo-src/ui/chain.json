@@ -1,0 +1,22 @@
+{
+  "$schema": "../node_modules/testreel/recording-definition.schema.json",
+  "url": "https://starkscan.co/tx/0x03548a481c1e3f948805fa353438bf4d6cbfc5c73712ec515391461fcd4d3b3e",
+  "viewport": { "width": 1440, "height": 810 },
+  "outputFormat": "mp4",
+  "cursor": { "enabled": true, "size": 28, "color": "#ffffff", "rippleColor": "#97cde5", "rippleSize": 44, "idleHide": false, "transitionMs": 700 },
+  "setup": {
+    "url": "https://starkscan.co/tx/0x03548a481c1e3f948805fa353438bf4d6cbfc5c73712ec515391461fcd4d3b3e",
+    "steps": [
+      { "action": "wait", "ms": 9000 },
+      { "action": "click", "selector": "role=button[name=\"Reject All\"]" },
+      { "action": "wait", "ms": 3000 }
+    ]
+  },
+  "steps": [
+    { "action": "wait", "ms": 6500 },
+    { "action": "hover", "selector": "text=Released from the pool" },
+    { "action": "wait", "ms": 3500 },
+    { "action": "hover", "selector": "text=Public trail ends here" },
+    { "action": "wait", "ms": 7000 }
+  ]
+}

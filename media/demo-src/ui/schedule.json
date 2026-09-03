@@ -1,0 +1,14 @@
+{
+  "$schema": "../node_modules/testreel/recording-definition.schema.json",
+  "url": "http://localhost:4180/app/schedules/3",
+  "viewport": { "width": 1440, "height": 810 },
+  "outputFormat": "mp4",
+  "cursor": { "enabled": true, "size": 28, "color": "#28262a", "rippleColor": "#97cde5", "rippleSize": 44, "idleHide": false, "transitionMs": 650 },
+  "steps": [
+    { "action": "wait", "ms": 1000 },
+    { "action": "hover", "selector": "text=What this schedule shows publicly" },
+    { "action": "wait", "ms": 4200 },
+    { "action": "scroll", "y": 260 },
+    { "action": "wait", "ms": 3600 }
+  ]
+}

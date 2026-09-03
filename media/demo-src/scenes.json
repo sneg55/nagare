@@ -1,0 +1,126 @@
+[
+  {
+    "id": "open",
+    "sec": 15,
+    "kind": "card",
+    "caption": "Nagare, private token vesting on Starknet",
+    "narrate": "Nagare is private token vesting on Starknet. A sender funds a lockup, the recipient withdraws what has vested, and no wallet address of either party appears in any Nagare transaction.",
+    "block": {
+      "type": "title",
+      "brand": "Nagare",
+      "sub": "Private token vesting on Starknet",
+      "tag": "Live on mainnet  ·  STRK20 anonymizer  ·  no owner, no upgrade path"
+    }
+  },
+  {
+    "id": "problem",
+    "sec": 18,
+    "kind": "card",
+    "caption": "Every other vesting contract names both parties in public",
+    "narrate": "Every other vesting contract names both parties in public. Open a Tokei or Sablier stream on a block explorer and you can read the cap table straight off it, and that record does not expire.",
+    "block": {
+      "type": "bullets",
+      "title": "Every other vesting contract names both parties in public.",
+      "rows": [
+        "Which address funds which",
+        "On what schedule, and for how much",
+        "Readable by anyone, for as long as the chain exists"
+      ]
+    }
+  },
+  {
+    "id": "app",
+    "sec": 20,
+    "kind": "ui",
+    "capture": "landing",
+    "caption": "The Nagare app",
+    "narrate": "Nagare moves the funding and the payouts through the S T R K twenty pool. The sender and the recipient of a schedule are Stark curve keys generated in the browser, so neither wallet ever appears next to the other."
+  },
+  {
+    "id": "disclose",
+    "sec": 22,
+    "kind": "card",
+    "caption": "What the chain can see",
+    "narrate": "The design hides the parties and publishes the terms. The wallet that funded a schedule, the wallet that receives it, and the wallet behind any payout are never published. Every amount, every date and every key is.",
+    "block": {
+      "type": "split",
+      "title": "What the chain can see.",
+      "cols": [
+        {
+          "heading": "Never published",
+          "items": [
+            "The wallet that funded a schedule",
+            "The wallet that receives it",
+            "The wallet that cancelled, transferred or sold",
+            "Which wallet owns the note a payout lands in"
+          ]
+        },
+        {
+          "heading": "Public on chain",
+          "items": [
+            "Every total, token, start, cliff and end",
+            "The sender key and recipient key, and every re-key",
+            "Every withdrawal, refund and sale, with its time",
+            "Every signature and every calldata item"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "create",
+    "sec": 22,
+    "kind": "ui",
+    "capture": "create",
+    "caption": "Opening a schedule",
+    "narrate": "Opening a schedule takes an amount, a cliff and an end date. It can be cancellable, or you can switch that off, and Nagare records a sender key that has no private key behind it, so nobody can cancel it afterwards, the sender included. Funding it is one signature in your wallet."
+  },
+  {
+    "id": "detail",
+    "sec": 20,
+    "kind": "ui",
+    "capture": "schedule",
+    "caption": "Schedule 3 on mainnet",
+    "narrate": "This is schedule three on mainnet. It was funded, the sender cancelled it, and the recipient withdrew the part that had vested. Anyone can read those amounts and dates. What the contract stores for each side is a public key, and no address of either party appears in any transaction on this schedule."
+  },
+  {
+    "id": "chain",
+    "sec": 22,
+    "kind": "ui",
+    "capture": "chain",
+    "caption": "The same activity on a block explorer",
+    "narrate": "Here is the pool paying the Nagare contract to fund a schedule. Starkscan reads it as a privacy pool withdrawal, one S T R K out of the pool, and the explorer states that the public trail ends there, because nothing on chain connects it to the deposit that funded it."
+  },
+  {
+    "id": "limits",
+    "sec": 20,
+    "kind": "card",
+    "caption": "What Nagare does not claim",
+    "narrate": "The claim is narrow, and worth stating exactly. Shielding is public. Amounts and timing can be correlated. The contract has no owner and no upgrade path, and it has not been audited.",
+    "block": {
+      "type": "bullets",
+      "title": "What Nagare does not claim.",
+      "rows": [
+        "Moving STRK into the pool is public: it puts your address and the amount on chain",
+        "Amounts and timing can be correlated across a deposit and a withdrawal",
+        "The contract has no owner and no upgrade path, and it has not been audited"
+      ]
+    }
+  },
+  {
+    "id": "close",
+    "sec": 14,
+    "kind": "card",
+    "caption": "Live on Starknet mainnet",
+    "narrate": "Nagare is live on Starknet mainnet. The contract, the app and the full source are on screen.",
+    "block": {
+      "type": "facts",
+      "title": "Live on Starknet mainnet.",
+      "rows": [
+        { "k": "Contract", "v": "0x00ae22ea…f03e323" },
+        { "k": "App", "v": "nagare-6go.pages.dev" },
+        { "k": "Source", "v": "github.com/sneg55/nagare" }
+      ]
+    }
+  }
+]

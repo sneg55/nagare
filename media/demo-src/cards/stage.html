@@ -1,0 +1,170 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=block" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #ffffff;
+    --cream: #f3f1eb;
+    --ink: #28262a;
+    --graphite: #4a4a4c;
+    --fog: #dddcdd;
+    --edge: #8a8a8c;
+    --sky: #97cde5;
+    --sage: #c8dfaa;
+    --r-ui: 4px; --r-card: 16px; --r-badge: 30px; --r-pill: 100px;
+    --ui: Inter, system-ui, -apple-system, sans-serif;
+    --display: "Source Serif 4", Georgia, serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: var(--ui);
+    -webkit-font-smoothing: antialiased;
+  }
+  #stage { width: 1920px; height: 1080px; position: relative; }
+  .pad { position: absolute; inset: 0; display: flex; flex-direction: column;
+         justify-content: center; padding: 130px 150px; gap: 40px; }
+
+  .brandrow { display: flex; align-items: center; gap: 24px; }
+  .mark { color: var(--ink); }
+  .brand { font-family: var(--display); font-size: 104px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+  .sub { font-family: var(--display); font-size: 62px; font-weight: 400; line-height: 1.18; max-width: 24ch; }
+  .tag { font-size: 30px; color: var(--graphite); }
+  .rule { width: 220px; height: 6px; background: var(--sage); border-radius: var(--r-pill); }
+
+  .h { font-family: var(--display); font-size: 68px; font-weight: 600; line-height: 1.12; max-width: 22ch; }
+  .lede { font-size: 34px; color: var(--graphite); max-width: 62ch; line-height: 1.45; }
+
+  .bul { display: flex; flex-direction: column; gap: 0; margin-top: 8px; }
+  .bul .row { display: flex; gap: 26px; font-size: 36px; line-height: 1.4;
+              padding: 26px 0; border-top: 1px solid var(--fog); }
+  .bul .row:last-child { border-bottom: 1px solid var(--fog); }
+  .bul .mk { color: var(--edge); flex: none; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; margin-top: 4px; }
+  .col .ch { padding-bottom: 18px; }
+  .col .pill { display: inline-block; font-size: 26px; padding: 8px 22px; border-radius: var(--r-pill);
+               background: var(--paper); border: 1px solid var(--fog); color: var(--ink); }
+  .col .item { font-size: 31px; line-height: 1.35; padding: 20px 0; border-top: 1px solid var(--fog); }
+  .col.keep .item { border-top-color: var(--ink); }
+
+  .facts { display: flex; flex-direction: column; margin-top: 8px; }
+  .facts .fr { display: flex; justify-content: space-between; align-items: baseline; gap: 40px;
+               padding: 26px 0; border-top: 1px solid var(--fog); font-size: 32px; }
+  .facts .fr:last-child { border-bottom: 1px solid var(--fog); }
+  .facts .fk { color: var(--graphite); }
+  .facts .fv { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 27px; }
+
+  .term { width: 100%; background: var(--paper); border: 1px solid var(--fog); border-radius: var(--r-card); overflow: hidden; }
+  .term .tb { height: 56px; background: var(--cream); border-bottom: 1px solid var(--fog);
+              display: flex; align-items: center; gap: 12px; padding: 0 24px; }
+  .term .tl { width: 14px; height: 14px; border-radius: 50%; background: var(--fog); }
+  .term .body { padding: 40px 44px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 32px; line-height: 1.6; }
+  .term .pr { color: var(--edge); margin-bottom: 20px; }
+  .term .pr::before { content: "$ "; color: var(--edge); }
+  .ln { white-space: pre-wrap; }
+  .ln.plain { color: var(--ink); } .ln.good { color: #3f7d20; } .ln.bad { color: #a33a3a; }
+  .ln.hi { color: var(--ink); }
+  .ln.dim { color: var(--edge); }
+</style>
+</head>
+<body>
+  <div id="stage"><div class="pad" id="pad"></div></div>
+<script>
+  const el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
+  const pad = document.getElementById('pad');
+
+  const waves = () => {
+    const NS = 'http://www.w3.org/2000/svg';
+    const s = document.createElementNS(NS, 'svg');
+    s.setAttribute('viewBox', '0 0 24 24');
+    s.setAttribute('width', '92'); s.setAttribute('height', '92');
+    s.setAttribute('fill', 'none'); s.setAttribute('stroke', 'currentColor');
+    s.setAttribute('stroke-width', '1.9'); s.setAttribute('stroke-linecap', 'round');
+    s.setAttribute('class', 'mark');
+    const d = 'M2 %Yc3.1 0 3.3-3 6.6-3s3.5 3 6.7 3 3.3-3 6.7-3';
+    [[6.6, 0.3], [12, 1], [17.4, 0.3]].forEach(([y, o]) => {
+      const p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', d.replace('%Y', String(y)));
+      p.setAttribute('opacity', String(o));
+      s.append(p);
+    });
+    return s;
+  };
+
+  function title(b) {
+    const br = el('div', 'brandrow');
+    br.append(waves(), el('div', 'brand', b.brand));
+    pad.append(br);
+    if (b.sub) pad.append(el('div', 'sub', b.sub));
+    pad.append(el('div', 'rule'));
+    if (b.tag) pad.append(el('div', 'tag', b.tag));
+  }
+
+  function bullets(b) {
+    if (b.title) pad.append(el('div', 'h', b.title));
+    if (b.lede) pad.append(el('div', 'lede', b.lede));
+    const wrap = el('div', 'bul');
+    for (const r of b.rows) {
+      const row = el('div', 'row');
+      row.append(el('span', 'mk', '→'), el('span', null, r));
+      wrap.append(row);
+    }
+    pad.append(wrap);
+  }
+
+  function split(b) {
+    if (b.title) pad.append(el('div', 'h', b.title));
+    if (b.lede) pad.append(el('div', 'lede', b.lede));
+    const cols = el('div', 'cols');
+    b.cols.forEach((c, i) => {
+      const col = el('div', 'col' + (i === 0 ? ' keep' : ''));
+      const ch = el('div', 'ch');
+      ch.append(el('span', 'pill', c.heading));
+      col.append(ch);
+      for (const item of c.items) col.append(el('div', 'item', item));
+      cols.append(col);
+    });
+    pad.append(cols);
+  }
+
+  function facts(b) {
+    if (b.title) pad.append(el('div', 'h', b.title));
+    if (b.lede) pad.append(el('div', 'lede', b.lede));
+    const wrap = el('div', 'facts');
+    for (const r of b.rows) {
+      const fr = el('div', 'fr');
+      fr.append(el('span', 'fk', r.k), el('span', 'fv', r.v));
+      wrap.append(fr);
+    }
+    pad.append(wrap);
+  }
+
+  function term(b) {
+    const t = el('div', 'term');
+    const tb = el('div', 'tb');
+    tb.append(el('span', 'tl'), el('span', 'tl'), el('span', 'tl'));
+    const body = el('div', 'body');
+    body.append(el('div', 'pr', b.prompt));
+    for (const l of b.lines) body.append(el('div', 'ln ' + (l.cls || 'plain'), l.text));
+    t.append(tb, body); pad.append(t);
+  }
+
+  const R = { title, bullets, split, facts, term };
+
+  window.__show = (scene) => {
+    pad.innerHTML = '';
+    const b = scene.block;
+    if (!b || !R[b.type]) throw new Error('unknown block for scene ' + scene.id);
+    R[b.type](b);
+    return document.fonts.ready.then(() => true);
+  };
+</script>
+</body>
+</html>

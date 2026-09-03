@@ -1,0 +1,24 @@
+{
+  "$schema": "../node_modules/testreel/recording-definition.schema.json",
+  "url": "http://localhost:4180/app/create",
+  "viewport": { "width": 1440, "height": 810 },
+  "outputFormat": "mp4",
+  "cursor": { "enabled": true, "size": 28, "color": "#28262a", "rippleColor": "#97cde5", "rippleSize": 44, "idleHide": false, "transitionMs": 650 },
+  "steps": [
+    { "action": "wait", "ms": 1800 },
+    { "action": "fill", "selector": "role=textbox[name=\"Amount in STRK\"]", "text": "2500" },
+    { "action": "wait", "ms": 900 },
+    { "action": "fill", "selector": "role=textbox[name=\"Cliff, in days from now\"]", "text": "180" },
+    { "action": "wait", "ms": 700 },
+    { "action": "fill", "selector": "role=textbox[name=\"Fully vested, in days\"]", "text": "730" },
+    { "action": "wait", "ms": 1800 },
+    { "action": "scroll", "y": 420 },
+    { "action": "wait", "ms": 1400 },
+    { "action": "click", "selector": "role=switch[name=\"You can cancel this\"]" },
+    { "action": "wait", "ms": 3200 },
+    { "action": "scroll", "y": 400 },
+    { "action": "wait", "ms": 1200 },
+    { "action": "hover", "selector": "role=button[name=\"Fund this schedule\"]" },
+    { "action": "wait", "ms": 2400 }
+  ]
+}
