@@ -195,8 +195,9 @@ export default function CreatePage() {
           <div className="card card-outlined stack-tight">
             <h3>Claim link for the recipient</h3>
             <p className="muted">
-              Copy this now. It is not stored anywhere and this page will not show it
-              again.
+              Send it over a channel you trust. This browser keeps the recipient&rsquo;s
+              key, so the schedule&rsquo;s own page can rebuild this link, and can forget
+              the key when you want to give up your hold on it.
             </p>
             <label className="field">
               <span className="visually-hidden">Claim link</span>

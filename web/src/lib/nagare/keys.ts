@@ -48,6 +48,12 @@ export function loadKey(id: string): Keypair | undefined {
   return read()[id]
 }
 
+export function deleteKey(id: string) {
+  const store = read()
+  delete store[id]
+  write(store)
+}
+
 export function allKeys(): KeyStore {
   return read()
 }

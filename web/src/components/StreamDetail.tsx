@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getStream, getOffer, type Stream, type Offer } from '@/lib/nagare/read'
-import { loadKey, publicKeyOf, saveKey, generateKeypair } from '@/lib/nagare/keys'
+import { loadKey, publicKeyOf, saveKey, deleteKey } from '@/lib/nagare/keys'
+import { claimLink } from '@/lib/nagare/claim'
 import { buildPayout } from '@/lib/nagare/flow'
 import { keyedActions, signKeyed } from '@/lib/nagare/actions'
 import {
@@ -34,6 +35,8 @@ export function StreamDetail({ id }: { id: number }) {
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000))
   const [newKey, setNewKey] = useState('')
   const [rekeyPending, setRekeyPending] = useState<{ privateKey: string; publicKey: string } | null>(null)
+  const [confirmForget, setConfirmForget] = useState(false)
+  const [keyTick, setKeyTick] = useState(0)
 
   useEffect(() => {
     const held = loadKey(`stream:${id}:rekey-target`)
@@ -106,6 +109,7 @@ export function StreamDetail({ id }: { id: number }) {
     )
   }
 
+  void keyTick
   const senderKey = loadKey(`stream:${id}:sender`)
   const recipientKey = loadKey(`stream:${id}:recipient`)
   const isRecipient =
@@ -299,6 +303,63 @@ export function StreamDetail({ id }: { id: number }) {
                     </p>
                   ) : null}
                 </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {isSender && isRecipient && recipientKey ? (
+              <div className="card card-outlined stack-tight">
+                <h3>You still hold the recipient&rsquo;s key</h3>
+                <p className="muted">
+                  You made this key when you opened the schedule, so the claim link can be
+                  rebuilt here as often as you need. It also means you can act as the
+                  recipient until they re-key.
+                </p>
+                <label className="field">
+                  <span className="visually-hidden">Claim link</span>
+                  <input
+                    readOnly
+                    value={claimLink(id, recipientKey.privateKey)}
+                    onFocus={(e) => e.currentTarget.select()}
+                  />
+                </label>
+                <div className="row-actions">
+                  <button
+                    className="btn"
+                    onClick={() =>
+                      void navigator.clipboard.writeText(claimLink(id, recipientKey.privateKey))
+                    }
+                  >
+                    Copy link
+                  </button>
+                  {confirmForget ? (
+                    <>
+                      <button
+                        className="btn"
+                        onClick={() => {
+                          deleteKey(`stream:${id}:recipient`)
+                          setConfirmForget(false)
+                          setKeyTick((t) => t + 1)
+                        }}
+                      >
+                        Yes, forget it
+                      </button>
+                      <button className="btn btn-quiet" onClick={() => setConfirmForget(false)}>
+                        Keep it
+                      </button>
+                    </>
+                  ) : (
+                    <button className="btn btn-quiet" onClick={() => setConfirmForget(true)}>
+                      Forget the recipient&rsquo;s key
+                    </button>
+                  )}
+                </div>
+                {confirmForget ? (
+                  <p className="muted" role="alert">
+                    Forgetting is the only way to give up your hold on this schedule before
+                    the recipient re-keys. If they never received the link, nobody can reach
+                    the vested amount afterwards.
+                  </p>
                 ) : null}
               </div>
             ) : null}
