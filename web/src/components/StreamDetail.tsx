@@ -210,7 +210,9 @@ export function StreamDetail({ id }: { id: number }) {
             <div className="card card-cream">
               <div className="stack">
                 <div className="stack-tight">
-                  <span className="muted">Available to withdraw now</span>
+                  <span className="muted">
+                    {isRecipient ? 'Available to withdraw now' : 'Vested and not yet withdrawn'}
+                  </span>
                   <p className="amount amount-lg">{toStrk(due)} STRK</p>
                 </div>
                 <Meter withdrawn={progress(schedule, now)} claimable={claimableFraction(schedule, now)} label="Vesting progress" />
@@ -258,6 +260,37 @@ export function StreamDetail({ id }: { id: number }) {
                   your records.
                 </p>
               </div>
+            ) : null}
+
+            {!isSender && !isRecipient && !movedOn ? (
+              openedHere(id) && isUncancelable(schedule) ? (
+                <div className="card card-outlined stack-tight">
+                  <h3>You opened this schedule</h3>
+                  <p className="muted">
+                    You opened it with no sender key, so nobody can cancel it, you
+                    included. Everything from here is the recipient&rsquo;s to do.
+                  </p>
+                </div>
+              ) : (
+                <div className="card card-outlined stack-tight">
+                  <h3>You hold no key for this schedule</h3>
+                  <p className="muted">
+                    Everything on this page is public and you can read all of it, but
+                    withdrawing, cancelling, re-keying or listing takes the sender&rsquo;s
+                    key or the recipient&rsquo;s, and this browser holds neither.
+                  </p>
+                  <p className="muted">
+                    If it should be yours, rebuild your keys from your wallet on the
+                    schedules page, or open the claim link that carries the
+                    recipient&rsquo;s key.
+                  </p>
+                  <div>
+                    <Link href="/app/schedules" className="btn">
+                      Go to your schedules
+                    </Link>
+                  </div>
+                </div>
+              )
             ) : null}
 
             {isRecipient ? (
