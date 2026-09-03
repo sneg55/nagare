@@ -1,8 +1,8 @@
 'use client'
 
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { WALLET_API } from '@starknet-io/types-js'
-import { connectWallet, discoverWallets, type Connected } from '@/lib/nagare/wallet'
+import { connectWallet, discoverWallets, silentAddress, type Connected } from '@/lib/nagare/wallet'
 import { readInFlight, writeInFlight, clearInFlight, type InFlight } from '@/lib/nagare/keys'
 import { deriveSeed } from '@/lib/nagare/derive'
 import { keypairFor, roleEntry, setActiveWallet } from '@/lib/nagare/roles'
@@ -88,6 +88,37 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setBusy(false)
     }
   }, [readBalances])
+
+  const drop = useCallback(() => {
+    live.current = null
+    seed.current = null
+    status.current = { registration: 'unknown', shielded: null }
+    setActiveWallet(null)
+    setConn(null)
+    setRegistration('unknown')
+    setShielded(null)
+  }, [])
+
+  const reconcile = useCallback(async () => {
+    const found = await discoverWallets()
+    if (found.length === 0) return
+    const address = await silentAddress(found[0])
+    if (!address) {
+      if (live.current) drop()
+      return
+    }
+    if (live.current && BigInt(live.current.address) === BigInt(address)) return
+    await connect()
+  }, [connect, drop])
+
+  useEffect(() => {
+    void reconcile()
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void reconcile()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [reconcile])
 
   const requireWallet = useCallback(async (): Promise<Wallet> => {
     const c = live.current ?? (await connect())

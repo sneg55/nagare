@@ -14,6 +14,24 @@ export async function discoverWallets() {
   return store.getWallets()
 }
 
+export async function silentAddress(selected: unknown): Promise<string | null> {
+  const request = (
+    selected as {
+      features?: Record<string, { request?: (call: unknown) => Promise<unknown> }>
+    }
+  )?.features?.['starknet:walletApi']?.request
+  if (!request) return null
+  try {
+    const accounts = (await request({
+      type: 'wallet_requestAccounts',
+      params: { silent_mode: true },
+    })) as string[] | undefined
+    return accounts?.[0] ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function connectWallet(selected: unknown): Promise<Connected> {
   const provider = new RpcProvider({ nodeUrl: WALLET_RPC })
   const wallet = await WalletAccountV6.connect(provider, selected as never)
