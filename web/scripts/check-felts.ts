@@ -1,5 +1,5 @@
 import { NAGARE, POOL, STRK } from '../src/lib/nagare/config'
-import { createActions, payoutActions } from '../src/lib/nagare/actions'
+import { createActions, keyedActions, offerActions, payoutActions } from '../src/lib/nagare/actions'
 
 const FELT = /^0x(0|[a-fA-F1-9]{1}[a-fA-F0-9]{0,62})$/
 const PLACEHOLDER = /^\$\{(?:openNoteIds\[[0-9]+\]|poolAddress)\}$/
@@ -21,8 +21,10 @@ const create = createActions({
   recipientPk: '0x6',
 })
 const payout = payoutActions({ op: 'Withdraw', streamId: 1, recipientAddress: '0x7' })
+const keyed = keyedActions('List', 1, 1, '0x8', ['0x9', '0xa'])
+const offer = offerActions(1, '0xb', 10n ** 18n, 4)
 
-for (const [label, actions] of [['create', create], ['payout', payout]] as const) {
+for (const [label, actions] of [['create', create], ['payout', payout], ['keyed', keyed], ['offer', offer]] as const) {
   actions.forEach((a, i) => {
     if (a.type === 'invoke') {
       checkFelt(`${label}[${i}].contract`, a.contract)

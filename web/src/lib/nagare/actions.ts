@@ -137,13 +137,22 @@ export function payoutActions(p: PayoutParams): WALLET_API.STRK20_ACTION[] {
   ]
 }
 
+export const CARRIER_WEI = 1n
+
 export function keyedActions(
   op: 'Transfer' | 'List',
   streamId: bigint | number,
   arg: string | bigint | number,
+  carrierRecipient: string,
   sig?: [string, string],
 ): WALLET_API.STRK20_ACTION[] {
   return [
+    {
+      type: 'transfer',
+      token: STRK,
+      amount: num.toHex(CARRIER_WEI),
+      recipient: carrierRecipient,
+    },
     {
       type: 'invoke',
       contract: NAGARE,

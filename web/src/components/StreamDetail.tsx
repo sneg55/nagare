@@ -141,6 +141,7 @@ export function StreamDetail({ id }: { id: number }) {
 
   const runTransfer = () =>
     void transfer.run(async () => {
+      if (!conn) throw new Error('Connect a wallet to do this.')
       if (!recipientKey) throw new Error('You do not hold the recipient key for this schedule.')
       const target = newKey.trim()
       if (!/^0x[0-9a-fA-F]{1,63}$/.test(target)) throw new Error('That does not look like a Nagare key.')
@@ -154,13 +155,14 @@ export function StreamDetail({ id }: { id: number }) {
         arg: target,
         streamNonce: schedule.nonce,
       })
-      return { streamId: String(id), actions: keyedActions('Transfer', id, target, sig) }
+      return { streamId: String(id), actions: keyedActions('Transfer', id, target, conn.address, sig) }
     })
 
   const listBusy = list.phase.kind !== 'idle' && list.phase.kind !== 'failed' && list.phase.kind !== 'confirmed'
 
   const runList = (enable: boolean) =>
     void list.run(async () => {
+      if (!conn) throw new Error('Connect a wallet to do this.')
       if (!recipientKey) throw new Error('You do not hold the recipient key for this schedule.')
       const arg = enable ? 1 : 0
       const sig = signKeyed(recipientKey.privateKey, {
@@ -169,7 +171,7 @@ export function StreamDetail({ id }: { id: number }) {
         arg,
         streamNonce: schedule.nonce,
       })
-      return { streamId: String(id), actions: keyedActions('List', id, arg, sig) }
+      return { streamId: String(id), actions: keyedActions('List', id, arg, conn.address, sig) }
     })
 
   return (
