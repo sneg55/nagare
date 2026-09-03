@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getStream, type Stream } from '@/lib/nagare/read'
-import { watched, watch, openedHere, recovered, markRecovered } from '@/lib/nagare/watch'
+import { watched, openedHere, recovered, markRecovered } from '@/lib/nagare/watch'
 import { statusOf, STATUS_LABEL, progress, claimableFraction, withdrawableAt } from '@/lib/nagare/status'
 import { toStrk, when } from '@/lib/nagare/format'
 import { Meter } from '@/components/Meter'
@@ -16,8 +16,6 @@ type Row = { id: number; schedule: Stream; role: string }
 export default function SchedulesPage() {
   const { conn, unlock } = useWallet()
   const [rows, setRows] = useState<Row[] | null>(null)
-  const [addId, setAddId] = useState('')
-  const [addNote, setAddNote] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
   const [scanned, setScanned] = useState<[number, number] | null>(null)
   const [scanNote, setScanNote] = useState<string | null>(null)
@@ -114,7 +112,7 @@ export default function SchedulesPage() {
               {scanning
                 ? 'Nagare is rebuilding your keys from that signature and checking every schedule on the contract for a match.'
                 : conn
-                  ? 'Open a schedule to vest tokens to someone, or add one by its id if you were given the number.'
+                  ? 'You hold no keys on any schedule the contract knows about. Open one to vest tokens to someone.'
                   : 'Connect your wallet and Nagare will rebuild your keys and find the schedules that carry them.'}
             </p>
             {scanned ? (
@@ -168,50 +166,15 @@ export default function SchedulesPage() {
           <h2>Missing one?</h2>
           <p className="muted">
             Nagare checks the contract for your keys the first time you connect on a
-            browser. Check again if a schedule was transferred to you since, or watch one
-            by id to follow a schedule you hold no key for.
+            browser. Check again if a schedule was transferred to you since.
           </p>
-          <div className="row-actions">
+          <div>
             <button
               className="btn"
               onClick={() => conn && void scan(conn.address)}
               disabled={!conn || scanning}
             >
               {scanning ? 'Checking the contract…' : 'Check for my schedules again'}
-            </button>
-            <label className="field field-narrow">
-              <span className="visually-hidden">Schedule id</span>
-              <input
-                value={addId}
-                onChange={(e) => setAddId(e.target.value)}
-                inputMode="numeric"
-                placeholder="12"
-                aria-label="Schedule id"
-              />
-            </label>
-            <button
-              className="btn btn-quiet"
-              onClick={() => {
-                void (async () => {
-                  const n = Number(addId)
-                  if (!Number.isInteger(n) || n < 1) {
-                    setAddNote('Schedule ids are whole numbers counting up from 1.')
-                    return
-                  }
-                  setAddNote(null)
-                  const s = await getStream(n)
-                  if (!s.exists) {
-                    setAddNote(`The contract has no schedule ${n}. Check the number with whoever sent it.`)
-                    return
-                  }
-                  watch(n)
-                  setAddId('')
-                  setAddNote(`Watching schedule ${n}.`)
-                  await load()
-                })()
-              }}
-            >
-              Watch by id
             </button>
           </div>
           {rows.length > 0 && scanned ? (
@@ -220,7 +183,6 @@ export default function SchedulesPage() {
             </p>
           ) : null}
           {rows.length > 0 && scanNote ? <p role="status">{scanNote}</p> : null}
-          {addNote ? <p role="status">{addNote}</p> : null}
         </div>
       </div>
     </section>
