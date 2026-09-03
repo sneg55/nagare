@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { getOffer, getStream, type Stream, type Offer } from '@/lib/nagare/read'
 import { offerActions } from '@/lib/nagare/actions'
 import { buildPayout } from '@/lib/nagare/flow'
-import { generateKeypair, saveKey, loadKey, publicKeyOf } from '@/lib/nagare/keys'
+import { keyForOffer } from '@/lib/nagare/derive'
+import { publicKeyFor, saveRole } from '@/lib/nagare/roles'
 import { parseStrk, toStrk, when, until } from '@/lib/nagare/format'
 import { offerStatusOf, canList } from '@/lib/nagare/status'
 import { MAX_OFFER_HOURS } from '@/lib/nagare/config'
@@ -26,7 +27,7 @@ export function SalePanel({
   isRecipient: boolean
   onDone: () => void
 }) {
-  const { requireWallet, prepare } = useWallet()
+  const { requireWallet, prepare, keyFor, unlock } = useWallet()
   const [price, setPrice] = useState('10')
   const [hours, setHours] = useState('12')
 
@@ -35,9 +36,8 @@ export function SalePanel({
   const reclaim = useAction('Reclaim', onDone)
 
   const status = offerStatusOf(offer, now)
-  const buyerKey = loadKey(`stream:${id}:offer:${offer.generation}:buyer`)
-  const isBuyer =
-    !!buyerKey && offer.generation > 0n && BigInt(publicKeyOf(buyerKey.privateKey)) === BigInt(offer.buyerPk)
+  const buyerPk = publicKeyFor(`stream:${id}:offer:${offer.generation}:buyer`)
+  const isBuyer = !!buyerPk && offer.generation > 0n && BigInt(buyerPk) === BigInt(offer.buyerPk)
 
   const runOffer = () =>
     void makeOffer.run(async () => {
@@ -47,8 +47,12 @@ export function SalePanel({
       if (!(h > 0 && h <= MAX_OFFER_HOURS)) {
         throw new Error(`An offer can stay open for up to ${MAX_OFFER_HOURS} hours.`)
       }
-      const buyer = generateKeypair()
-      saveKey(`stream:${id}:offer:${(offer.generation + 1n).toString()}:buyer`, buyer)
+      const generation = (offer.generation + 1n).toString()
+      const buyer = keyForOffer(await unlock(), id, generation)
+      saveRole(`stream:${id}:offer:${generation}:buyer`, {
+        publicKey: buyer.publicKey,
+        source: { kind: 'offer', streamId: id, generation },
+      })
       return {
         streamId: String(id),
         actions: offerActions(id, buyer.publicKey, amount, now + h * 3600),
@@ -58,8 +62,7 @@ export function SalePanel({
 
   const runAccept = () =>
     void accept.run(async () => {
-      const key = loadKey(`stream:${id}:recipient`)
-      if (!key) throw new Error('You do not hold the recipient key for this schedule.')
+      const key = await keyFor(`stream:${id}:recipient`)
       const { conn } = await requireWallet()
       return {
         streamId: String(id),
@@ -78,7 +81,8 @@ export function SalePanel({
 
   const runReclaim = () =>
     void reclaim.run(async () => {
-      if (!buyerKey) throw new Error('You do not hold the buyer key for this offer.')
+      if (!isBuyer) throw new Error('You do not hold the buyer key for this offer.')
+      const buyerKey = await keyFor(`stream:${id}:offer:${offer.generation}:buyer`)
       const { conn } = await requireWallet()
       return {
         streamId: String(id),

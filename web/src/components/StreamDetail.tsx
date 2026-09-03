@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getStream, getOffer, type Stream, type Offer } from '@/lib/nagare/read'
-import { loadKey, publicKeyOf, saveKey, deleteKey } from '@/lib/nagare/keys'
+import { loadKey } from '@/lib/nagare/keys'
+import { forgetRole, moveRole, publicKeyFor, roleEntry } from '@/lib/nagare/roles'
+import { sameKey } from '@/lib/nagare/derive'
 import { claimLink } from '@/lib/nagare/claim'
 import { isUncancelable } from '@/lib/nagare/cancelable'
 import { openedHere } from '@/lib/nagare/watch'
@@ -30,21 +32,21 @@ import { watch } from '@/lib/nagare/watch'
 import { SalePanel } from './SalePanel'
 
 export function StreamDetail({ id }: { id: number }) {
-  const { requireWallet, prepare } = useWallet()
+  const { requireWallet, prepare, keyFor } = useWallet()
   const valid = Number.isInteger(id) && id > 0
   const [schedule, setSchedule] = useState<Stream | null>(null)
   const [offer, setOffer] = useState<Offer | null>(null)
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000))
   const [newKey, setNewKey] = useState('')
-  const [rekeyPending, setRekeyPending] = useState<{ privateKey: string; publicKey: string } | null>(null)
+  const [rekeyPending, setRekeyPending] = useState<string | null>(null)
   const [confirmForget, setConfirmForget] = useState(false)
   const [keyTick, setKeyTick] = useState(0)
 
   useEffect(() => {
-    const held = loadKey(`stream:${id}:rekey-target`)
-    if (held) {
-      setRekeyPending(held)
-      setNewKey(held.publicKey)
+    const waiting = publicKeyFor(`stream:${id}:rekey-target`)
+    if (waiting) {
+      setRekeyPending(waiting)
+      setNewKey(waiting)
     }
   }, [id])
 
@@ -112,12 +114,15 @@ export function StreamDetail({ id }: { id: number }) {
   }
 
   void keyTick
-  const senderKey = loadKey(`stream:${id}:sender`)
-  const recipientKey = loadKey(`stream:${id}:recipient`)
-  const isRecipient =
-    !!recipientKey && BigInt(publicKeyOf(recipientKey.privateKey)) === BigInt(schedule.recipientPk)
-  const isSender = !!senderKey && BigInt(publicKeyOf(senderKey.privateKey)) === BigInt(schedule.senderPk)
-  const movedOn = !!recipientKey && !isRecipient
+  const heldSenderPk = publicKeyFor(`stream:${id}:sender`)
+  const heldRecipientPk = publicKeyFor(`stream:${id}:recipient`)
+  const isRecipient = !!heldRecipientPk && sameKey(heldRecipientPk, schedule.recipientPk)
+  const isSender = !!heldSenderPk && sameKey(heldSenderPk, schedule.senderPk)
+  const movedOn = !!heldRecipientPk && !isRecipient
+  const linkKey =
+    isRecipient && roleEntry(`stream:${id}:recipient`)?.source.kind === 'stored'
+      ? loadKey(`stream:${id}:recipient`)
+      : undefined
 
   const status = statusOf(schedule, now)
   const due = withdrawableAt(schedule, now)
@@ -125,7 +130,8 @@ export function StreamDetail({ id }: { id: number }) {
 
   const runWithdraw = () =>
     void withdraw.run(async () => {
-      if (!recipientKey) throw new Error('You do not hold the recipient key for this schedule.')
+      if (!isRecipient) throw new Error('You do not hold the recipient key for this schedule.')
+      const recipientKey = await keyFor(`stream:${id}:recipient`)
       const { conn } = await requireWallet()
       return {
         streamId: String(id),
@@ -136,7 +142,8 @@ export function StreamDetail({ id }: { id: number }) {
 
   const runCancel = () =>
     void cancel.run(async () => {
-      if (!senderKey) throw new Error('You do not hold the sender key for this schedule.')
+      if (!isSender) throw new Error('You do not hold the sender key for this schedule.')
+      const senderKey = await keyFor(`stream:${id}:sender`)
       const { conn } = await requireWallet()
       return {
         streamId: String(id),
@@ -147,13 +154,13 @@ export function StreamDetail({ id }: { id: number }) {
 
   const runTransfer = () =>
     void transfer.run(async () => {
-      if (!recipientKey) throw new Error('You do not hold the recipient key for this schedule.')
+      if (!isRecipient) throw new Error('You do not hold the recipient key for this schedule.')
+      const recipientKey = await keyFor(`stream:${id}:recipient`)
       const { conn } = await requireWallet()
       const target = newKey.trim()
       if (!/^0x[0-9a-fA-F]{1,63}$/.test(target)) throw new Error('That does not look like a Nagare key.')
-      if (rekeyPending && BigInt(target) === BigInt(rekeyPending.publicKey)) {
-        saveKey(`stream:${id}:recipient`, rekeyPending)
-        window.localStorage.removeItem('nagare.keys.v1.pending')
+      if (rekeyPending && BigInt(target) === BigInt(rekeyPending)) {
+        moveRole(`stream:${id}:rekey-target`, `stream:${id}:recipient`)
       }
       const sig = signKeyed(recipientKey.privateKey, {
         streamId: id,
@@ -174,7 +181,8 @@ export function StreamDetail({ id }: { id: number }) {
 
   const runList = (enable: boolean) =>
     void list.run(async () => {
-      if (!recipientKey) throw new Error('You do not hold the recipient key for this schedule.')
+      if (!isRecipient) throw new Error('You do not hold the recipient key for this schedule.')
+      const recipientKey = await keyFor(`stream:${id}:recipient`)
       const { conn } = await requireWallet()
       const arg = enable ? 1 : 0
       const sig = signKeyed(recipientKey.privateKey, {
@@ -375,7 +383,7 @@ export function StreamDetail({ id }: { id: number }) {
               </div>
             ) : null}
 
-            {openedHere(id) && isRecipient && recipientKey ? (
+            {openedHere(id) && linkKey ? (
               <div className="card card-outlined stack-tight">
                 <h3>You still hold the recipient&rsquo;s key</h3>
                 <p className="muted">
@@ -387,7 +395,7 @@ export function StreamDetail({ id }: { id: number }) {
                   <span className="visually-hidden">Claim link</span>
                   <input
                     readOnly
-                    value={claimLink(id, recipientKey.privateKey)}
+                    value={claimLink(id, linkKey.privateKey)}
                     onFocus={(e) => e.currentTarget.select()}
                   />
                 </label>
@@ -395,7 +403,7 @@ export function StreamDetail({ id }: { id: number }) {
                   <button
                     className="btn"
                     onClick={() =>
-                      void navigator.clipboard.writeText(claimLink(id, recipientKey.privateKey))
+                      void navigator.clipboard.writeText(claimLink(id, linkKey.privateKey))
                     }
                   >
                     Copy link
@@ -405,7 +413,7 @@ export function StreamDetail({ id }: { id: number }) {
                       <button
                         className="btn"
                         onClick={() => {
-                          deleteKey(`stream:${id}:recipient`)
+                          forgetRole(`stream:${id}:recipient`)
                           setConfirmForget(false)
                           setKeyTick((t) => t + 1)
                         }}

@@ -7,7 +7,7 @@ import { watched, watch, openedHere } from '@/lib/nagare/watch'
 import { statusOf, STATUS_LABEL, progress, claimableFraction, withdrawableAt } from '@/lib/nagare/status'
 import { toStrk, when } from '@/lib/nagare/format'
 import { Meter } from '@/components/Meter'
-import { loadKey } from '@/lib/nagare/keys'
+import { publicKeyFor } from '@/lib/nagare/roles'
 import { KeyRecovery } from '@/components/KeyRecovery'
 
 type Row = { id: number; schedule: Stream; role: string }
@@ -23,8 +23,8 @@ export default function SchedulesPage() {
     const loaded = await Promise.all(
       ids.map(async (id) => {
         const schedule = await getStream(id)
-        const hasSender = !!loadKey(`stream:${id}:sender`)
-        const hasRecipient = !!loadKey(`stream:${id}:recipient`)
+        const hasSender = !!publicKeyFor(`stream:${id}:sender`)
+        const hasRecipient = !!publicKeyFor(`stream:${id}:recipient`)
         const role =
           hasSender && hasRecipient
             ? 'You hold both keys'

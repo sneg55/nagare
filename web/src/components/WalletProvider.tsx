@@ -5,6 +5,8 @@ import type { WALLET_API } from '@starknet-io/types-js'
 import { connectWallet, discoverWallets, type Connected } from '@/lib/nagare/wallet'
 import { readInFlight, writeInFlight, clearInFlight, type InFlight } from '@/lib/nagare/keys'
 import { deriveSeed } from '@/lib/nagare/derive'
+import { keypairFor, roleEntry } from '@/lib/nagare/roles'
+import type { Keypair } from '@/lib/nagare/keys'
 
 type Registration = 'unknown' | 'none' | 'unregistered' | 'registered'
 
@@ -17,6 +19,7 @@ type Ctx = {
   connect: () => Promise<Connected | null>
   requireWallet: () => Promise<Wallet>
   unlock: () => Promise<string>
+  keyFor: (storeId: string) => Promise<Keypair>
   refresh: () => Promise<void>
   submit: (op: string, streamId: string, actions: WALLET_API.STRK20_ACTION[]) => Promise<string>
   prepare: (actions: WALLET_API.STRK20_ACTION[]) => Promise<string[]>
@@ -101,6 +104,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return seed.current
   }, [requireWallet])
 
+  const keyFor = useCallback(
+    async (storeId: string): Promise<Keypair> => {
+      const entry = roleEntry(storeId)
+      if (!entry) throw new Error('This browser holds no key for that.')
+      if (entry.source.kind === 'stored') return keypairFor(storeId, entry, null)
+      return keypairFor(storeId, entry, await unlock())
+    },
+    [unlock],
+  )
+
   const refresh = useCallback(async () => {
     if (live.current) await readBalances(live.current)
   }, [readBalances])
@@ -143,8 +156,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ conn, registration, shielded, connect, requireWallet, unlock, refresh, submit, prepare, pending, clearPending, busy }),
-    [conn, registration, shielded, connect, requireWallet, unlock, refresh, submit, prepare, pending, clearPending, busy],
+    () => ({ conn, registration, shielded, connect, requireWallet, unlock, keyFor, refresh, submit, prepare, pending, clearPending, busy }),
+    [conn, registration, shielded, connect, requireWallet, unlock, keyFor, refresh, submit, prepare, pending, clearPending, busy],
   )
 
   return <WalletCtx.Provider value={value}>{children}</WalletCtx.Provider>

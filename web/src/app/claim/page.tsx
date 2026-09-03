@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { TopBar } from '@/components/TopBar'
 import { parseClaim } from '@/lib/nagare/claim'
 import { saveKey, publicKeyOf } from '@/lib/nagare/keys'
-import { keyForSchedule } from '@/lib/nagare/derive'
+import { saveRole } from '@/lib/nagare/roles'
+import { keyForRecipient } from '@/lib/nagare/derive'
 import { isUncancelable } from '@/lib/nagare/cancelable'
 import { useWallet } from '@/components/WalletProvider'
 import { getStream, type Stream } from '@/lib/nagare/read'
@@ -41,6 +42,10 @@ export default function ClaimPage() {
       const mine = BigInt(publicKeyOf(privateKey)) === BigInt(schedule.recipientPk)
       if (mine) {
         saveKey(`stream:${streamId}:recipient`, { privateKey, publicKey: publicKeyOf(privateKey) })
+        saveRole(`stream:${streamId}:recipient`, {
+          publicKey: publicKeyOf(privateKey),
+          source: { kind: 'stored' },
+        })
         watch(streamId)
       }
       history.replaceState(null, '', window.location.pathname)
@@ -90,7 +95,10 @@ export default function ClaimPage() {
     setKeyNote(null)
     try {
       const seed = await unlock()
-      saveKey(`stream:${streamId}:rekey-target`, keyForSchedule(seed, 'recipient', streamId))
+      saveRole(`stream:${streamId}:rekey-target`, {
+        publicKey: keyForRecipient(seed, streamId).publicKey,
+        source: { kind: 'recipient', streamId },
+      })
       window.location.href = `/app/schedules/${streamId}`
     } catch (e) {
       setKeyNote((e as Error).message)

@@ -2,8 +2,6 @@ import { ec, hash, num, shortString } from 'starknet'
 import { CHAIN_ID } from './config'
 import type { Keypair } from './keys'
 
-export type Role = 'sender' | 'recipient'
-
 export const SEED_MESSAGE = {
   types: {
     StarknetDomain: [
@@ -49,12 +47,23 @@ function keyFrom(raw: string): Keypair {
   return { privateKey, publicKey: ec.starkCurve.getStarkKey(privateKey) }
 }
 
-export function keyForSchedule(seed: string, role: Role, streamId: number): Keypair {
+export function keyForRecipient(seed: string, streamId: number): Keypair {
   return keyFrom(
     hash.computePoseidonHashOnElements([
       seed,
-      shortString.encodeShortString(role),
+      shortString.encodeShortString('recipient'),
       num.toHex(streamId),
+    ]),
+  )
+}
+
+export function keyForOffer(seed: string, streamId: number, generation: string): Keypair {
+  return keyFrom(
+    hash.computePoseidonHashOnElements([
+      seed,
+      shortString.encodeShortString('offer'),
+      num.toHex(streamId),
+      num.toHex(BigInt(generation)),
     ]),
   )
 }
@@ -73,15 +82,15 @@ export function senderSlots(seed: string): Keypair[] {
   return Array.from({ length: SENDER_SLOT_SPAN }, (_, i) => keyForSender(seed, i))
 }
 
-export function freeSenderSlot(slots: Keypair[], taken: string[]): Keypair {
+export function freeSenderSlot(slots: Keypair[], taken: string[]): { slot: number; key: Keypair } {
   const used = new Set(taken.map((pk) => BigInt(pk)))
-  const free = slots.find((k) => !used.has(BigInt(k.publicKey)))
-  if (!free) {
+  const slot = slots.findIndex((k) => !used.has(BigInt(k.publicKey)))
+  if (slot === -1) {
     throw new Error(
       `This wallet has opened ${SENDER_SLOT_SPAN} schedules, which is as many as one signature can rebuild.`,
     )
   }
-  return free
+  return { slot, key: slots[slot] }
 }
 
 export function keyForInvite(seed: string, index: number): Keypair {

@@ -1,6 +1,6 @@
 import { getStream, streamCount } from './read'
-import { keyForInvite, keyForSchedule, sameKey, senderSlots, INVITE_INDEX_SPAN } from './derive'
-import { saveKey } from './keys'
+import { keyForInvite, keyForRecipient, sameKey, senderSlots, INVITE_INDEX_SPAN } from './derive'
+import { saveRole } from './roles'
 import { watch } from './watch'
 
 export type Found = { id: number; role: 'sender' | 'recipient' }
@@ -25,18 +25,30 @@ export async function recoverFromSeed(
       const s = schedules[i]
       if (!s.exists) return
 
-      const sender = senders.find((k) => sameKey(k.publicKey, s.senderPk))
-      if (sender) {
-        saveKey(`stream:${id}:sender`, sender)
+      const slot = senders.findIndex((k) => sameKey(k.publicKey, s.senderPk))
+      if (slot !== -1) {
+        saveRole(`stream:${id}:sender`, {
+          publicKey: senders[slot].publicKey,
+          source: { kind: 'sender-slot', slot },
+        })
         watch(id)
         found.push({ id, role: 'sender' })
       }
 
-      const recipient = keyForSchedule(seed, 'recipient', id)
-      const invite = invites.find((k) => sameKey(k.publicKey, s.recipientPk))
-      const match = sameKey(recipient.publicKey, s.recipientPk) ? recipient : invite
-      if (match) {
-        saveKey(`stream:${id}:recipient`, match)
+      const recipient = keyForRecipient(seed, id)
+      const inviteIndex = invites.findIndex((k) => sameKey(k.publicKey, s.recipientPk))
+      if (sameKey(recipient.publicKey, s.recipientPk)) {
+        saveRole(`stream:${id}:recipient`, {
+          publicKey: recipient.publicKey,
+          source: { kind: 'recipient', streamId: id },
+        })
+        watch(id)
+        found.push({ id, role: 'recipient' })
+      } else if (inviteIndex !== -1) {
+        saveRole(`stream:${id}:recipient`, {
+          publicKey: invites[inviteIndex].publicKey,
+          source: { kind: 'invite', index: inviteIndex },
+        })
         watch(id)
         found.push({ id, role: 'recipient' })
       }

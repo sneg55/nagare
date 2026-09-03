@@ -5,7 +5,8 @@ import { useRef, useState } from 'react'
 import { useWallet } from '@/components/WalletProvider'
 import { useAction, ActionStatus } from '@/components/ActionRunner'
 import { createActions } from '@/lib/nagare/actions'
-import { generateKeypair, loadKey, saveKey, deleteKey } from '@/lib/nagare/keys'
+import { generateKeypair, saveKey } from '@/lib/nagare/keys'
+import { moveRole, saveRole } from '@/lib/nagare/roles'
 import { freeSenderSlot, senderSlots } from '@/lib/nagare/derive'
 import { findCreated, usedSenderKeys } from '@/lib/nagare/recover'
 import { NO_CANCEL_KEY } from '@/lib/nagare/cancelable'
@@ -41,11 +42,7 @@ export default function CreatePage() {
       (await findCreated(it.countBefore, it.senderPk, it.recipientPk)) ?? it.guessedId
     if (id !== it.guessedId) {
       for (const role of ['sender', 'recipient'] as const) {
-        const held = loadKey(`stream:${it.guessedId}:${role}`)
-        if (held) {
-          saveKey(`stream:${id}:${role}`, held)
-          deleteKey(`stream:${it.guessedId}:${role}`)
-        }
+        moveRole(`stream:${it.guessedId}:${role}`, `stream:${id}:${role}`)
       }
       unwatch(it.guessedId)
       unmarkOpened(it.guessedId)
@@ -88,9 +85,12 @@ export default function CreatePage() {
       let senderPk = NO_CANCEL_KEY
       if (cancelable) {
         const seed = await unlock()
-        const sender = freeSenderSlot(senderSlots(seed), await usedSenderKeys())
-        saveKey(`stream:${guessedId}:sender`, sender)
-        senderPk = sender.publicKey
+        const { slot, key } = freeSenderSlot(senderSlots(seed), await usedSenderKeys())
+        saveRole(`stream:${guessedId}:sender`, {
+          publicKey: key.publicKey,
+          source: { kind: 'sender-slot', slot },
+        })
+        senderPk = key.publicKey
       }
 
       let recipientPk = recipientKey.trim()
@@ -98,6 +98,10 @@ export default function CreatePage() {
       if (mode === 'link') {
         const recipient = generateKeypair()
         saveKey(`stream:${guessedId}:recipient`, recipient)
+        saveRole(`stream:${guessedId}:recipient`, {
+          publicKey: recipient.publicKey,
+          source: { kind: 'stored' },
+        })
         recipientPk = recipient.publicKey
         recipientPrivateKey = recipient.privateKey
       } else if (!/^0x[0-9a-fA-F]{1,63}$/.test(recipientPk)) {
