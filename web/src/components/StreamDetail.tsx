@@ -564,6 +564,13 @@ export function StreamDetail({ id }: { id: number }) {
                     {toStrk(schedule.total - refundIfCanceledNow(schedule, now) - schedule.withdrawn)}{' '}
                     STRK already vested stays claimable by the recipient.
                   </p>
+                  <p className="muted">
+                    Whether a schedule can be cancelled is fixed when it is opened, and no
+                    operation on the contract changes it afterwards. You cannot give this
+                    right up here, so the recipient is trusting you for as long as the
+                    schedule runs. Opening the next one uncancelable is the way to spare
+                    them that.
+                  </p>
                   <div>
                     <button className="btn" onClick={runCancel}>
                       Cancel this schedule
