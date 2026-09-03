@@ -23,7 +23,7 @@ export default function MarketPage() {
     <section className="band">
       <div className="wrap stack stack-lg">
         <div className="stack-tight">
-          <h1>Open to offers</h1>
+          <h1>Marketplace</h1>
           <p className="lead measure-72">
             Every schedule here has been opened to offers by whoever holds it. Escrow a
             price against one and the holder decides whether to take it. If they never do,
