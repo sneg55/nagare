@@ -5,7 +5,7 @@ import { useWallet } from '@/components/WalletProvider'
 import { recoverFromSeed } from '@/lib/nagare/recover'
 
 export function KeyRecovery({ onDone }: { onDone: () => void }) {
-  const { conn, connect, unlock } = useWallet()
+  const { unlock } = useWallet()
   const [open, setOpen] = useState(false)
   const [running, setRunning] = useState(false)
   const [scanned, setScanned] = useState<[number, number] | null>(null)
@@ -55,15 +55,9 @@ export function KeyRecovery({ onDone }: { onDone: () => void }) {
         checks every schedule on the contract for a match.
       </p>
       <div className="row-actions">
-        {conn ? (
-          <button className="btn" onClick={() => void run()} disabled={running}>
-            {running ? 'Looking for your schedules…' : 'Find my schedules'}
-          </button>
-        ) : (
-          <button className="btn" onClick={() => void connect()}>
-            Connect a wallet
-          </button>
-        )}
+        <button className="btn" onClick={() => void run()} disabled={running}>
+          {running ? 'Looking for your schedules…' : 'Find my schedules'}
+        </button>
         <button className="btn btn-quiet" onClick={() => setOpen(false)} disabled={running}>
           Close
         </button>

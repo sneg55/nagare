@@ -59,7 +59,7 @@ function humanize(raw: string): { message: string; retryable: boolean } {
 }
 
 export function useAction(op: OpName, onDone?: () => void) {
-  const { submit, conn, registration, shielded, clearPending } = useWallet()
+  const { submit, requireWallet, clearPending } = useWallet()
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' })
 
   const run = useCallback(
@@ -67,13 +67,13 @@ export function useAction(op: OpName, onDone?: () => void) {
       setPhase({ kind: 'preparing' })
       let built: Awaited<ReturnType<Build>> | null = null
       try {
-        if (!conn) throw new Error('Connect a wallet to do this.')
-        if (registration === 'unregistered') {
-          throw new Error('Turn on private balances in Ready first.')
+        const wallet = await requireWallet()
+        if (wallet.registration === 'unregistered') {
+          throw new Error('Turn on private balances in Ready first, then try again.')
         }
-        if (shielded !== null && shielded < POOL_FEE) {
+        if (wallet.shielded !== null && wallet.shielded < POOL_FEE) {
           throw new Error(
-            `The pool charges ${toStrk(POOL_FEE)} STRK per transaction and you have ${toStrk(shielded)} shielded. Shield more in Ready.`,
+            `The pool charges ${toStrk(POOL_FEE)} STRK per transaction and you have ${toStrk(wallet.shielded)} shielded. Shield more in Ready.`,
           )
         }
         built = await build()
@@ -116,7 +116,7 @@ export function useAction(op: OpName, onDone?: () => void) {
         setPhase({ kind: 'failed', ...humanize(raw), detail: raw })
       }
     },
-    [op, submit, onDone, conn, registration, shielded, clearPending],
+    [op, submit, onDone, requireWallet, clearPending],
   )
 
   const reset = useCallback(() => setPhase({ kind: 'idle' }), [])

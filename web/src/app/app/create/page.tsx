@@ -17,7 +17,7 @@ import { claimLink } from '@/lib/nagare/claim'
 import { VestingChart } from '@/components/VestingChart'
 
 export default function CreatePage() {
-  const { shielded, conn, unlock } = useWallet()
+  const { shielded, unlock } = useWallet()
   const router = useRouter()
   const [amount, setAmount] = useState('100')
   const [cliffDays, setCliffDays] = useState('90')
@@ -252,8 +252,8 @@ export default function CreatePage() {
           </p>
 
           <div>
-            <button className="btn btn-primary" onClick={submit} disabled={busy || !conn}>
-              {conn ? 'Fund this schedule' : 'Connect a wallet to fund'}
+            <button className="btn btn-primary" onClick={submit} disabled={busy}>
+              Fund this schedule
             </button>
           </div>
         </div>

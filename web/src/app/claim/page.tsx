@@ -20,7 +20,7 @@ type State =
 
 export default function ClaimPage() {
   const [state, setState] = useState<State>({ kind: 'reading' })
-  const { conn, connect, unlock } = useWallet()
+  const { unlock } = useWallet()
   const [keying, setKeying] = useState(false)
   const [keyNote, setKeyNote] = useState<string | null>(null)
 
@@ -89,11 +89,6 @@ export default function ClaimPage() {
     setKeying(true)
     setKeyNote(null)
     try {
-      if (!conn) {
-        await connect()
-        setKeyNote('Wallet connected. Press the button again to derive your key.')
-        return
-      }
       const seed = await unlock()
       saveKey(`stream:${streamId}:rekey-target`, keyForSchedule(seed, 'recipient', streamId))
       window.location.href = `/app/schedules/${streamId}`
@@ -195,7 +190,7 @@ export default function ClaimPage() {
                 onClick={() => void makeMyKey()}
                 disabled={keying}
               >
-                {keying ? 'Deriving your key…' : conn ? 'Make me a key from my wallet' : 'Connect a wallet'}
+                {keying ? 'Deriving your key…' : 'Make me a key from my wallet'}
               </button>
               <Link href={`/app/schedules/${streamId}`} className="btn">
                 Leave the sender&rsquo;s key for now

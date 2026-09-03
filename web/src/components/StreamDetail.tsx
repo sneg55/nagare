@@ -30,7 +30,7 @@ import { watch } from '@/lib/nagare/watch'
 import { SalePanel } from './SalePanel'
 
 export function StreamDetail({ id }: { id: number }) {
-  const { conn, prepare } = useWallet()
+  const { requireWallet, prepare } = useWallet()
   const valid = Number.isInteger(id) && id > 0
   const [schedule, setSchedule] = useState<Stream | null>(null)
   const [offer, setOffer] = useState<Offer | null>(null)
@@ -125,7 +125,8 @@ export function StreamDetail({ id }: { id: number }) {
 
   const runWithdraw = () =>
     void withdraw.run(async () => {
-      if (!conn || !recipientKey) throw new Error('You do not hold the recipient key for this schedule.')
+      if (!recipientKey) throw new Error('You do not hold the recipient key for this schedule.')
+      const { conn } = await requireWallet()
       return {
         streamId: String(id),
         actions: await buildPayout('Withdraw', schedule, id, recipientKey.privateKey, conn.address, prepare),
@@ -135,7 +136,8 @@ export function StreamDetail({ id }: { id: number }) {
 
   const runCancel = () =>
     void cancel.run(async () => {
-      if (!conn || !senderKey) throw new Error('You do not hold the sender key for this schedule.')
+      if (!senderKey) throw new Error('You do not hold the sender key for this schedule.')
+      const { conn } = await requireWallet()
       return {
         streamId: String(id),
         actions: await buildPayout('Cancel', schedule, id, senderKey.privateKey, conn.address, prepare),
@@ -145,8 +147,8 @@ export function StreamDetail({ id }: { id: number }) {
 
   const runTransfer = () =>
     void transfer.run(async () => {
-      if (!conn) throw new Error('Connect a wallet to do this.')
       if (!recipientKey) throw new Error('You do not hold the recipient key for this schedule.')
+      const { conn } = await requireWallet()
       const target = newKey.trim()
       if (!/^0x[0-9a-fA-F]{1,63}$/.test(target)) throw new Error('That does not look like a Nagare key.')
       if (rekeyPending && BigInt(target) === BigInt(rekeyPending.publicKey)) {
@@ -172,8 +174,8 @@ export function StreamDetail({ id }: { id: number }) {
 
   const runList = (enable: boolean) =>
     void list.run(async () => {
-      if (!conn) throw new Error('Connect a wallet to do this.')
       if (!recipientKey) throw new Error('You do not hold the recipient key for this schedule.')
+      const { conn } = await requireWallet()
       const arg = enable ? 1 : 0
       const sig = signKeyed(recipientKey.privateKey, {
         streamId: id,

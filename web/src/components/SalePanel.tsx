@@ -26,7 +26,7 @@ export function SalePanel({
   isRecipient: boolean
   onDone: () => void
 }) {
-  const { conn, prepare } = useWallet()
+  const { requireWallet, prepare } = useWallet()
   const [price, setPrice] = useState('10')
   const [hours, setHours] = useState('12')
 
@@ -59,7 +59,8 @@ export function SalePanel({
   const runAccept = () =>
     void accept.run(async () => {
       const key = loadKey(`stream:${id}:recipient`)
-      if (!conn || !key) throw new Error('You do not hold the recipient key for this schedule.')
+      if (!key) throw new Error('You do not hold the recipient key for this schedule.')
+      const { conn } = await requireWallet()
       return {
         streamId: String(id),
         actions: await buildPayout(
@@ -77,7 +78,8 @@ export function SalePanel({
 
   const runReclaim = () =>
     void reclaim.run(async () => {
-      if (!conn || !buyerKey) throw new Error('You do not hold the buyer key for this offer.')
+      if (!buyerKey) throw new Error('You do not hold the buyer key for this offer.')
+      const { conn } = await requireWallet()
       return {
         streamId: String(id),
         actions: await buildPayout(
@@ -184,8 +186,8 @@ export function SalePanel({
             </label>
           </div>
           <div>
-            <button className="btn" onClick={runOffer} disabled={!conn}>
-              {conn ? `Offer ${price} STRK` : 'Connect a wallet to offer'}
+            <button className="btn" onClick={runOffer}>
+              Offer {price} STRK
             </button>
           </div>
         </div>
