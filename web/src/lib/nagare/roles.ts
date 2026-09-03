@@ -8,7 +8,24 @@ export type Source =
   | { kind: 'invite'; index: number }
   | { kind: 'offer'; streamId: number; generation: string }
 
-export type RoleEntry = { publicKey: string; source: Source }
+export type RoleEntry = { publicKey: string; source: Source; owner?: string }
+
+let activeWallet: string | null = null
+
+export function setActiveWallet(address: string | null) {
+  activeWallet = address
+}
+
+function sameAddress(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false
+  return BigInt(a) === BigInt(b)
+}
+
+function visible(entry: RoleEntry): boolean {
+  if (entry.source.kind === 'stored') return true
+  if (!activeWallet) return true
+  return sameAddress(entry.owner, activeWallet)
+}
 
 const STORE_KEY = 'nagare.roles.v1'
 
@@ -29,13 +46,13 @@ function write(store: RoleStore) {
 
 export function saveRole(id: string, entry: RoleEntry) {
   const store = read()
-  store[id] = entry
+  store[id] = entry.source.kind === 'stored' ? entry : { ...entry, owner: activeWallet ?? undefined }
   write(store)
 }
 
 export function roleEntry(id: string): RoleEntry | undefined {
   const known = read()[id]
-  if (known) return known
+  if (known) return visible(known) ? known : undefined
   const held = loadKey(id)
   return held ? { publicKey: held.publicKey, source: { kind: 'stored' } } : undefined
 }

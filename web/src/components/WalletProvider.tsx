@@ -5,7 +5,7 @@ import type { WALLET_API } from '@starknet-io/types-js'
 import { connectWallet, discoverWallets, type Connected } from '@/lib/nagare/wallet'
 import { readInFlight, writeInFlight, clearInFlight, type InFlight } from '@/lib/nagare/keys'
 import { deriveSeed } from '@/lib/nagare/derive'
-import { keypairFor, roleEntry } from '@/lib/nagare/roles'
+import { keypairFor, roleEntry, setActiveWallet } from '@/lib/nagare/roles'
 import type { Keypair } from '@/lib/nagare/keys'
 
 type Registration = 'unknown' | 'none' | 'unregistered' | 'registered'
@@ -78,7 +78,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         return null
       }
       const c = await connectWallet(found[0])
+      if (live.current && BigInt(live.current.address) !== BigInt(c.address)) seed.current = null
       live.current = c
+      setActiveWallet(c.address)
       setConn(c)
       await readBalances(c)
       return c
