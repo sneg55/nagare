@@ -145,13 +145,13 @@ The contract has 46 tests green under snforge, including a signature vector gene
 TypeScript and verified in Cairo so the browser signer and the contract cannot drift.
 
 Schedule 6 has been through the whole sale path on mainnet: listed, offered against
-twice, accepted at generation 2, and then withdrawn from by its new holder. Transfer and
-Reclaim are implemented and covered by tests, and have not run against the deployed
-contract yet.
+twice, accepted at generation 2, withdrawn from by its new holder, and the escrow behind
+the offer that expired reclaimed by the buyer who made it. Transfer is the one operation
+with no mainnet transaction behind it, and it rests on its tests.
 
 [`strk20.json`](strk20.json) carries one mainnet hash for each operation that has run:
-Create, Withdraw, Cancel, List, Offer, Accept, and the buyer's withdrawal after the sale.
-Every one of them succeeded and carries events from both the pool and Nagare.
+Create, Withdraw, Cancel, List, Offer, Accept, Reclaim, and the buyer's withdrawal after
+the sale. Every one of them succeeded and carries events from both the pool and Nagare.
 
 Not audited.
 
