@@ -148,15 +148,15 @@ export function SalePanel({
           </p>
           {isRecipient ? (
             <div>
-              <button className="btn btn-primary" onClick={runAccept}>
-                Accept {toStrk(offer.price)} STRK
+              <button className="btn btn-primary" onClick={runAccept} disabled={accept.busy}>
+                {accept.busy ? 'Accepting\u2026' : `Accept ${toStrk(offer.price)} STRK`}
               </button>
             </div>
           ) : null}
           {isBuyer ? (
             <div>
-              <button className="btn" onClick={runReclaim}>
-                Take my {toStrk(offer.price)} STRK back
+              <button className="btn" onClick={runReclaim} disabled={reclaim.busy}>
+                {reclaim.busy ? 'Reclaiming\u2026' : `Take my ${toStrk(offer.price)} STRK back`}
               </button>
               <p className="muted">
                 Reclaiming cancels your offer. You can do this at any time before it is
@@ -178,8 +178,12 @@ export function SalePanel({
           </p>
           {stale.map((g) => (
             <div key={g}>
-              <button className="btn" onClick={() => runReclaimOf(BigInt(g))}>
-                Reclaim my offer from round {g}
+              <button
+                className="btn"
+                onClick={() => runReclaimOf(BigInt(g))}
+                disabled={reclaim.busy}
+              >
+                {reclaim.busy ? 'Reclaiming\u2026' : `Reclaim my offer from round ${g}`}
               </button>
             </div>
           ))}
@@ -197,8 +201,8 @@ export function SalePanel({
           </p>
           {isBuyer ? (
             <div>
-              <button className="btn" onClick={runReclaim}>
-                Take my {toStrk(offer.price)} STRK back
+              <button className="btn" onClick={runReclaim} disabled={reclaim.busy}>
+                {reclaim.busy ? 'Reclaiming\u2026' : `Take my ${toStrk(offer.price)} STRK back`}
               </button>
             </div>
           ) : null}
@@ -222,8 +226,8 @@ export function SalePanel({
             </label>
           </div>
           <div>
-            <button className="btn" onClick={runOffer}>
-              Offer {price} STRK
+            <button className="btn" onClick={runOffer} disabled={makeOffer.busy}>
+              {makeOffer.busy ? 'Offering\u2026' : `Offer ${price} STRK`}
             </button>
           </div>
         </div>

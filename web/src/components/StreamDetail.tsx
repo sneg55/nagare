@@ -229,8 +229,6 @@ export function StreamDetail({ id }: { id: number }) {
 
   const nonceMoves = async () => (await getStream(id)).nonce !== schedule.nonce
 
-  const listBusy = list.phase.kind !== 'idle' && list.phase.kind !== 'failed' && list.phase.kind !== 'confirmed'
-
   const runList = (enable: boolean) =>
     void list.run(async () => {
       if (!isRecipient) throw new Error('You do not hold the recipient key for this schedule.')
@@ -437,8 +435,12 @@ export function StreamDetail({ id }: { id: number }) {
                       private note in the pool, so your visible balance will not move.
                     </p>
                     <div>
-                      <button className="btn btn-primary" onClick={runWithdraw}>
-                        Withdraw {toStrk(due)} STRK
+                      <button
+                        className="btn btn-primary"
+                        onClick={runWithdraw}
+                        disabled={withdraw.busy}
+                      >
+                        {withdraw.busy ? 'Withdrawing\u2026' : `Withdraw ${toStrk(due)} STRK`}
                       </button>
                     </div>
                   </div>
@@ -570,6 +572,7 @@ export function StreamDetail({ id }: { id: number }) {
                     <>
                       <button
                         className="btn"
+                        disabled={transfer.busy}
                         onClick={() => {
                           setConfirmTransfer(false)
                           runTransfer()
@@ -585,7 +588,9 @@ export function StreamDetail({ id }: { id: number }) {
                     <button
                       className={rekeyPending ? 'btn btn-primary' : 'btn'}
                       onClick={() => (rekeyPending ? runTransfer() : setConfirmTransfer(true))}
-                      disabled={!canTransfer(schedule, now, offer!) || !newKey.trim()}
+                      disabled={
+                        transfer.busy || !canTransfer(schedule, now, offer!) || !newKey.trim()
+                      }
                     >
                       {rekeyPending ? 'Move it onto my key' : 'Transfer this schedule'}
                     </button>
@@ -613,7 +618,7 @@ export function StreamDetail({ id }: { id: number }) {
                     aria-checked={schedule.sellable}
                     aria-labelledby={`sellable-${id}`}
                     onClick={() => runList(!schedule.sellable)}
-                    disabled={!canList(schedule, now) || listBusy}
+                    disabled={!canList(schedule, now) || list.busy}
                   >
                     <span className="switch-knob" />
                   </button>
@@ -642,8 +647,8 @@ export function StreamDetail({ id }: { id: number }) {
                     did not have to.
                   </p>
                   <div>
-                    <button className="btn" onClick={runCancel}>
-                      Cancel this schedule
+                    <button className="btn" onClick={runCancel} disabled={cancel.busy}>
+                      {cancel.busy ? 'Cancelling\u2026' : 'Cancel this schedule'}
                     </button>
                   </div>
                 </div>

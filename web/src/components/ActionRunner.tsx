@@ -133,7 +133,9 @@ export function useAction(op: OpName, onDone?: () => void) {
 
   const reset = useCallback(() => setPhase({ kind: 'idle' }), [])
 
-  return { phase, run, reset }
+  const busy = phase.kind !== 'idle' && phase.kind !== 'failed' && phase.kind !== 'confirmed'
+
+  return { phase, run, reset, busy }
 }
 
 export function ActionStatus({ phase, op, reset }: { phase: Phase; op: OpName; reset: () => void }) {

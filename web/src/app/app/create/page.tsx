@@ -52,7 +52,7 @@ export default function CreatePage() {
     if (it.recipientPrivateKey) setLink(claimLink(id, it.recipientPrivateKey))
   }
 
-  const { phase, run, reset } = useAction('Create', () => void place())
+  const { phase, run, reset, busy } = useAction('Create', () => void place())
 
   const totalCost = (() => {
     try {
@@ -125,8 +125,6 @@ export default function CreatePage() {
       }
     })
   }
-
-  const busy = phase.kind !== 'idle' && phase.kind !== 'failed' && phase.kind !== 'confirmed'
 
   return (
     <section className="band">
