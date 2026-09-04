@@ -5,7 +5,7 @@
 //     lands under TARGET seconds, padded with silence to the scene length
 // Output: out/demo.mp4 (1920x1080, H.264 + AAC).
 
-import { execFileSync } from 'child_process'
+import { execFileSync, spawnSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -21,9 +21,21 @@ const OUT = path.join(__dirname, 'out', 'demo.mp4')
 // with headroom); TAIL is the per-scene breathing room after narration ends;
 // BG is the pad color behind UI captures (match the card background).
 const W = 1920, H = 1080, FPS = 30, TAIL = 0.4, TARGET = 172, BG = '0xf3f1eb'
+const SPEED = 1.2, RMS_DB = -19
 
 const probe = (f) =>
   parseFloat(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nk=1:nw=1', f], { encoding: 'utf8' }).trim())
+
+const rmsOf = (f) => {
+  const r = spawnSync('ffmpeg', ['-hide_banner', '-i', f, '-af', 'astats', '-f', 'null', '-'], {
+    encoding: 'utf8',
+  })
+  const hits = [...(r.stderr ?? '').matchAll(/RMS level dB: (-?[\d.]+)/g)]
+    .map((m) => parseFloat(m[1]))
+    .filter((n) => Number.isFinite(n))
+  if (!hits.length) throw new Error(`could not measure the level of ${path.basename(f)}`)
+  return hits[hits.length - 1]
+}
 
 const latestCapture = (name) => {
   const files = fs.readdirSync(CAPS).filter((f) => f.startsWith(`${name}-`) && f.endsWith('.mp4'))
@@ -35,7 +47,7 @@ const latestCapture = (name) => {
 // Measure narration + compute the global speed factor.
 let sumDa = 0
 for (const s of scenes) {
-  s._audio = path.join(AUDIO, `${s.id}.mp3`)
+  s._audio = path.join(AUDIO, `${s.id}.wav`)
   if (!fs.existsSync(s._audio)) throw new Error(`missing narration for ${s.id}; run tts.mjs first`)
   s._da = probe(s._audio)
   sumDa += s._da
@@ -43,7 +55,13 @@ for (const s of scenes) {
 const factor = Math.max(1, sumDa / (TARGET - scenes.length * TAIL))
 for (const s of scenes) s._len = s._da / factor + TAIL
 const total = scenes.reduce((a, s) => a + s._len, 0)
-console.log(`narration ${sumDa.toFixed(1)}s -> speed x${factor.toFixed(3)} -> final ~${total.toFixed(1)}s`)
+const energy = scenes.reduce((a, s) => a + s._da * 10 ** (rmsOf(s._audio) / 10), 0)
+const rmsDb = 10 * Math.log10(energy / sumDa)
+const gainDb = RMS_DB - rmsDb
+console.log(
+  `narration ${sumDa.toFixed(1)}s at ${rmsDb.toFixed(1)} dB RMS -> gain ${gainDb.toFixed(1)} dB, ` +
+    `cut x${SPEED} -> final ~${(total / SPEED).toFixed(1)}s`
+)
 
 // Build one ffmpeg invocation with paired (video, audio) inputs per scene.
 const inputs = []
@@ -76,8 +94,11 @@ scenes.forEach((s, i) => {
   )
   concatLabels.push(`[v${i}][a${i}]`)
 })
-filters.push(`${concatLabels.join('')}concat=n=${scenes.length}:v=1:a=1[v][ac]`)
-filters.push('[ac]loudnorm=I=-16:TP=-1.5:LRA=11[a]')
+filters.push(`${concatLabels.join('')}concat=n=${scenes.length}:v=1:a=1[vc][ac]`)
+filters.push(`[vc]setpts=PTS/${SPEED},fps=${FPS}[v]`)
+filters.push(
+  `[ac]atempo=${SPEED},highpass=f=70,volume=${gainDb.toFixed(2)}dB,alimiter=limit=0.9:level=disabled[a]`
+)
 
 const args = [
   '-y', '-loglevel', 'error',
