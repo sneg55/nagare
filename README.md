@@ -41,8 +41,8 @@ appears next to the other.
 | | Whether a schedule is listed for sale, and every offer's price, expiry and buyer key |
 | | Every signature and every calldata item, including note ids |
 
-Disclosed is the operative word. Amounts, schedules and timing are public. A distinctive
-amount withdrawn shortly after a distinctive shield can be correlated. A key reused across
+Amounts, schedules and timing are public, and the right-hand column is long on purpose. A
+distinctive amount withdrawn shortly after a distinctive shield can be correlated. A key reused across
 schedules links those schedules, which is why sender keys are per schedule. Shielding
 itself publishes the depositor's address and the amount. The claim is that no wallet
 address of either party appears in any Nagare transaction, and it does not extend past
@@ -86,8 +86,8 @@ blocks a transfer.
 
 Neither rule covers the sender. A sale writes `recipient_pk` and leaves `sender_pk` alone,
 so on a cancelable schedule the sender can still cancel after the sale and take the
-unvested part back from the buyer. An uncancelable schedule is the only version that is
-safe to buy without trusting whoever opened it.
+unvested part back from the buyer. Only an uncancelable schedule is safe to buy without
+trusting whoever opened it.
 
 Offers are numbered, and each one's escrow belongs to its number. A new offer does not
 clear an older one, so an offer that expires keeps its STRK in the contract until its
@@ -96,14 +96,15 @@ buyer reclaims it, under the key that made it.
 ## Keys
 
 One wallet signature produces a seed, and every key Nagare needs is derived from it by a
-fixed path, so a new browser rebuilds them from the wallet alone. The browser stores
-public keys and derivation paths, never a private key.
+fixed path, so a new browser rebuilds them from the wallet alone. What the browser keeps
+is a public key and the path it came from, which is enough to know which schedules are
+yours and useless to anyone who steals it.
 
 ![Where Nagare keys come from](media/schematics/keys.png)
 
 The exception is a key that arrives in a claim link, which the sender generated in their
-own browser. No wallet can rebuild it, so a recipient should re-key onto a key of their
-own as soon as they arrive. [Keys and recovery](https://nagare-6go.pages.dev/docs/keys)
+own browser. That one is held in the browser itself, and no wallet can rebuild it, so a
+recipient should re-key onto a key of their own as soon as they arrive. [Keys and recovery](https://nagare-6go.pages.dev/docs/keys)
 covers what that means in practice.
 
 ## Try it
