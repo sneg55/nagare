@@ -5,7 +5,7 @@ import { getOffer, getStream, type Stream, type Offer } from '@/lib/nagare/read'
 import { offerActions } from '@/lib/nagare/actions'
 import { buildPayout } from '@/lib/nagare/flow'
 import { keyForOffer } from '@/lib/nagare/derive'
-import { publicKeyFor, saveRole } from '@/lib/nagare/roles'
+import { offerGenerationsHeld, publicKeyFor, saveRole } from '@/lib/nagare/roles'
 import { watch } from '@/lib/nagare/watch'
 import { parseStrk, toStrk, when, until } from '@/lib/nagare/format'
 import { offerStatusOf, canList } from '@/lib/nagare/status'
@@ -81,10 +81,9 @@ export function SalePanel({
       }
     })
 
-  const runReclaim = () =>
+  const runReclaimOf = (generation: bigint) =>
     void reclaim.run(async () => {
-      if (!isBuyer) throw new Error('You do not hold the buyer key for this offer.')
-      const buyerKey = await keyFor(`stream:${id}:offer:${offer.generation}:buyer`)
+      const buyerKey = await keyFor(`stream:${id}:offer:${generation}:buyer`)
       const { conn } = await requireWallet()
       return {
         streamId: String(id),
@@ -95,11 +94,16 @@ export function SalePanel({
           buyerKey.privateKey,
           conn.address,
           prepare,
-          offer.generation,
+          generation,
         ),
-        settled: async () => !(await getOffer(id)).live,
+        settled:
+          generation === offer.generation ? async () => !(await getOffer(id)).live : undefined,
       }
     })
+
+  const runReclaim = () => runReclaimOf(offer.generation)
+
+  const stale = offerGenerationsHeld(id).filter((g) => BigInt(g) !== offer.generation)
 
   const pendingOffer = status === 'live' || status === 'expired'
 
@@ -160,6 +164,25 @@ export function SalePanel({
               </p>
             </div>
           ) : null}
+        </div>
+      ) : null}
+
+      {stale.length > 0 ? (
+        <div className="stack-tight">
+          <h4>Earlier offers you made</h4>
+          <p className="muted">
+            An offer stays escrowed under its own generation until you reclaim it, so one you
+            made before this round can still be sitting in the contract. Nagare cannot read an
+            older generation back, so try it and the contract will say whether anything is
+            there.
+          </p>
+          {stale.map((g) => (
+            <div key={g}>
+              <button className="btn" onClick={() => runReclaimOf(BigInt(g))}>
+                Reclaim my offer from round {g}
+              </button>
+            </div>
+          ))}
         </div>
       ) : null}
 

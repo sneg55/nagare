@@ -10,7 +10,7 @@ export const CHAIN_ID = 'SN_MAIN'
 export const RPC_URL =
   process.env.NEXT_PUBLIC_RPC_URL ??
   'https://starknet-mainnet.g.alchemy.com/starknet/version/rpc/v0_9/demo'
-export const DEPLOYMENT_BLOCK = 0
+export const DEPLOYMENT_BLOCK = 14253484
 
 export const VOYAGER = 'https://voyager.online'
 

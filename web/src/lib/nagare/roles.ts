@@ -92,6 +92,16 @@ export function moveRole(from: string, to: string) {
   forgetRole(from)
 }
 
+export function offerGenerationsHeld(streamId: number): string[] {
+  const prefix = `stream:${streamId}:offer:`
+  const seen = new Set<string>()
+  for (const [id, entry] of Object.entries(read())) {
+    if (!id.startsWith(prefix) || !id.endsWith(':buyer') || !visible(entry)) continue
+    seen.add(id.slice(prefix.length, -':buyer'.length))
+  }
+  return [...seen].sort((a, b) => Number(BigInt(a) - BigInt(b)))
+}
+
 export function promoteOfferKey(streamId: number, recipientPk: string): boolean {
   const held = roleEntry(`stream:${streamId}:recipient`)
   if (held && sameAddress(held.publicKey, recipientPk)) return false
