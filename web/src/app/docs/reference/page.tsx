@@ -89,8 +89,9 @@ export default function Reference() {
         cannot be moved elsewhere while a price is standing against it.
       </p>
       <p>
-        This path is implemented end to end and has not been exercised on mainnet. No offer has
-        been placed against any schedule on the deployed contract.
+        Listing and offering have both run on mainnet. Accepting an offer and reclaiming one
+        have not, so that half of the path rests on its tests rather than on a transaction you
+        can go and read.
       </p>
 
       <h2 id="disclosure">What the chain records</h2>

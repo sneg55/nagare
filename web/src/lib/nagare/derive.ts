@@ -57,6 +57,16 @@ export function keyForRecipient(seed: string, streamId: number): Keypair {
   )
 }
 
+export function keyForLegacySender(seed: string, streamId: number): Keypair {
+  return keyFrom(
+    hash.computePoseidonHashOnElements([
+      seed,
+      shortString.encodeShortString('sender'),
+      num.toHex(streamId),
+    ]),
+  )
+}
+
 export function keyForOffer(seed: string, streamId: number, generation: string): Keypair {
   return keyFrom(
     hash.computePoseidonHashOnElements([

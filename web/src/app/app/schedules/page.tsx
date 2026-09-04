@@ -76,8 +76,14 @@ export default function SchedulesPage() {
   }, [load])
 
   useEffect(() => {
-    if (!conn || tried.current === conn.address) return
-    if (watched().length > 0 || recovered(conn.address)) return
+    if (!conn || tried.current === conn.address || recovered(conn.address)) return
+    const ids = watched()
+    const allKnown =
+      ids.length > 0 &&
+      ids.every(
+        (id) => publicKeyFor(`stream:${id}:sender`) || publicKeyFor(`stream:${id}:recipient`),
+      )
+    if (allKnown) return
     tried.current = conn.address
     void scan(conn.address)
   }, [conn, scan])

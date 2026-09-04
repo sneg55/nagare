@@ -1,6 +1,7 @@
 import { getOffer, getStream, streamCount } from './read'
 import {
   keyForInvite,
+  keyForLegacySender,
   keyForOffer,
   keyForRecipient,
   sameKey,
@@ -35,10 +36,18 @@ export async function recoverFromSeed(
       if (!s.exists) return
 
       const slot = senders.findIndex((k) => sameKey(k.publicKey, s.senderPk))
+      const legacySender = keyForLegacySender(seed, id)
       if (slot !== -1) {
         saveRole(`stream:${id}:sender`, {
           publicKey: senders[slot].publicKey,
           source: { kind: 'sender-slot', slot },
+        })
+        watch(id)
+        found.push({ id, role: 'sender' })
+      } else if (sameKey(legacySender.publicKey, s.senderPk)) {
+        saveRole(`stream:${id}:sender`, {
+          publicKey: legacySender.publicKey,
+          source: { kind: 'sender-legacy', streamId: id },
         })
         watch(id)
         found.push({ id, role: 'sender' })

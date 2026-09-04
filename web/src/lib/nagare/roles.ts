@@ -1,9 +1,16 @@
 import { deleteKey, loadKey, saveKey, type Keypair } from './keys'
-import { keyForInvite, keyForOffer, keyForRecipient, keyForSender } from './derive'
+import {
+  keyForInvite,
+  keyForLegacySender,
+  keyForOffer,
+  keyForRecipient,
+  keyForSender,
+} from './derive'
 
 export type Source =
   | { kind: 'stored' }
   | { kind: 'sender-slot'; slot: number }
+  | { kind: 'sender-legacy'; streamId: number }
   | { kind: 'recipient'; streamId: number }
   | { kind: 'invite'; index: number }
   | { kind: 'offer'; streamId: number; generation: string }
@@ -110,6 +117,7 @@ export function keypairFor(id: string, entry: RoleEntry, seed: string | null): K
   }
   if (!seed) throw new Error('Nagare needs one wallet signature to rebuild that key.')
   if (s.kind === 'sender-slot') return keyForSender(seed, s.slot)
+  if (s.kind === 'sender-legacy') return keyForLegacySender(seed, s.streamId)
   if (s.kind === 'recipient') return keyForRecipient(seed, s.streamId)
   if (s.kind === 'invite') return keyForInvite(seed, s.index)
   return keyForOffer(seed, s.streamId, s.generation)
