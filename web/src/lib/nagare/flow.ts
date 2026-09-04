@@ -21,12 +21,11 @@ export async function buildPayout(
   generation?: bigint,
 ): Promise<WALLET_API.STRK20_ACTION[]> {
   const arg = generation === undefined ? undefined : generation.toString()
-  const probeOf = (sig?: [string, string]) =>
-    invokeCalldata({ op, streamId, arg, noteId: OPEN_NOTE_PLACEHOLDER, sig })
+  const probe = invokeCalldata({ op, streamId, arg, noteId: OPEN_NOTE_PLACEHOLDER })
 
   const params: PayoutParams = { op, streamId, arg, recipientAddress }
-  const first = await prepare(payoutActions(params))
-  const noteId = resolveNoteId(first, probeOf())
+  const prepared = await prepare(payoutActions(params))
+  const noteId = resolveNoteId(prepared, probe)
 
   const sig = signPayout(privateKey, {
     streamId,
@@ -36,10 +35,5 @@ export async function buildPayout(
     streamNonce: stream.nonce,
   })
 
-  const signed = payoutActions({ ...params, sig })
-  const second = await prepare(signed)
-  if (BigInt(resolveNoteId(second, probeOf(sig))) !== BigInt(noteId)) {
-    throw new Error('the wallet changed the note id between checks')
-  }
-  return signed
+  return payoutActions({ ...params, sig })
 }

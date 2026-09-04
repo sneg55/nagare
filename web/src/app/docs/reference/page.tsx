@@ -147,10 +147,10 @@ export default function Reference() {
           </dd>
         </div>
         <div>
-          <dt>The wallet changed the note it would pay into</dt>
+          <dt>Your wallet returned a transaction Nagare could not read</dt>
           <dd>
-            The signature is bound to a specific note, so Nagare refuses to send a payment it
-            cannot prove. Try again.
+            A payout is signed against the note your wallet picked, so Nagare has to find that
+            note in what the wallet prepared. Try again, and update the wallet if it persists.
           </dd>
         </div>
         <div>

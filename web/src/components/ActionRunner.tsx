@@ -49,10 +49,10 @@ function humanize(raw: string): { message: string; retryable: boolean } {
   if (/INVALID_REQUEST_PAYLOAD/.test(raw)) {
     return { message: 'The wallet rejected the shape of this transaction.', retryable: false }
   }
-  if (/note the wallet would pay into|note id/i.test(raw)) {
+  if (/could not find the Nagare call/i.test(raw)) {
     return {
       message:
-        'The wallet changed the note it would pay into, so nothing was sent. Try again.',
+        'Your wallet returned a transaction Nagare could not read, so nothing was sent. Try again, and update the wallet if it keeps happening.',
       retryable: true,
     }
   }
@@ -189,12 +189,12 @@ export function ActionStatus({ phase, op, reset }: { phase: Phase; op: OpName; r
 
   const step =
     phase.kind === 'preparing'
-      ? 'Working out where the payment lands'
+      ? 'Working out where the payment lands. Your wallet asks twice: once to find the note, once to send.'
       : phase.kind === 'signing'
         ? 'Signing with your schedule key'
         : phase.kind === 'settling'
           ? 'Your wallet sent it. Waiting for the contract to show the change.'
-          : 'Your wallet is building the privacy proof. This takes about 30 seconds.'
+          : 'Your wallet is building the privacy proof and sending it. This takes about 30 seconds.'
 
   return (
     <div className="card card-outlined stack-tight" role="status" aria-live="polite">
