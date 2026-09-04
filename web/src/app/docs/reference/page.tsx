@@ -95,9 +95,9 @@ export default function Reference() {
         sender key is a constant with no private key behind it.
       </p>
       <p>
-        Listing and offering have both run on mainnet. Accepting an offer and reclaiming one
-        have not, so that half of the path rests on its tests rather than on a transaction you
-        can go and read.
+        Listing, offering and accepting have all run on mainnet, and the buyer withdrew from
+        the schedule afterwards. Reclaiming an escrow has not, so that one rests on its tests
+        rather than on a transaction you can go and read.
       </p>
 
       <h2 id="disclosure">What the chain records</h2>

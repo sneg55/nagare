@@ -123,9 +123,10 @@ which is the published constant no private key exists for.
 The contract has 46 tests green under snforge, including a signature vector generated in
 TypeScript and verified in Cairo so the browser signer and the contract cannot drift.
 
-Offer has run on mainnet too: schedule 6 carries an escrowed offer at generation 1.
-Transfer, Accept and Reclaim are implemented and covered by tests, and have not run
-against the deployed contract yet.
+Schedule 6 has been through the whole sale path on mainnet: listed, offered against
+twice, accepted at generation 2, and then withdrawn from by its new holder. Transfer and
+Reclaim are implemented and covered by tests, and have not run against the deployed
+contract yet.
 
 Not audited.
 
