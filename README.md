@@ -15,6 +15,11 @@ generated in the browser, and every withdrawal, cancellation, re-key and sale is
 signature over the operation, bound to the chain, the contract, the schedule, the note
 being paid into and a nonce.
 
+[![Watch the demo](media/schematics/poster.png)](https://youtu.be/rvvzpcRo0bw)
+
+A two minute walkthrough of the app against mainnet, ending on a real funding transaction
+where the explorer reports that the public trail stops at the pool.
+
 ## Why keys instead of addresses
 
 Every on-chain vesting contract today publishes the cap table. Open a Tokei or Sablier

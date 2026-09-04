@@ -8,7 +8,7 @@ const OUT = path.join(__dirname, '..', '..', 'schematics')
 fs.mkdirSync(OUT, { recursive: true })
 
 const stage = 'file://' + path.join(__dirname, 'stage.html')
-const SHEETS = ['flow', 'vesting', 'keys']
+const SHEETS = ['poster', 'flow', 'vesting', 'keys']
 
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1600, height: 900 }, deviceScaleFactor: 2 })

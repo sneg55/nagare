@@ -43,11 +43,39 @@
   .cancel { stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 4 6; }
   .lstart { text-anchor: start; }
   .lend { text-anchor: end; }
+  .poster { width: 1456px; height: 819px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 30px;
+            background: var(--paper); border: 1px solid var(--fog); border-radius: 24px; }
+  .poster .pbrand { display: flex; align-items: center; gap: 20px; }
+  .poster .pname { font-family: var(--display); font-size: 82px; font-weight: 600; letter-spacing: -1px; }
+  .poster .ptag { font-family: var(--display); font-size: 40px; color: var(--ink); }
+  .poster .pmeta { font-size: 25px; color: var(--graphite); }
+  .poster .play { width: 116px; height: 116px; border-radius: 50%; background: var(--sage);
+                  display: flex; align-items: center; justify-content: center; margin-top: 6px; }
+  .poster .play svg { margin-left: 8px; }
   .tick { font-family: var(--ui); font-size: 20px; fill: var(--graphite); text-anchor: middle; }
   .key { font-family: var(--ui); font-size: 21px; fill: var(--ink); text-anchor: middle; }
 </style>
 </head>
 <body>
+
+<div class="sheet" id="poster" style="padding: 44px 52px;">
+  <div class="poster">
+    <div class="pbrand">
+      <svg viewBox="0 0 24 24" width="76" height="76" fill="none" stroke="#28262a" stroke-width="1.9" stroke-linecap="round">
+        <path d="M2 6.6c3.1 0 3.3-3 6.6-3s3.5 3 6.7 3 3.3-3 6.7-3" opacity="0.3" />
+        <path d="M2 12c3.1 0 3.3-3 6.6-3s3.5 3 6.7 3 3.3-3 6.7-3" />
+        <path d="M2 17.4c3.1 0 3.3-3 6.6-3s3.5 3 6.7 3 3.3-3 6.7-3" opacity="0.3" />
+      </svg>
+      <div class="pname">Nagare</div>
+    </div>
+    <div class="ptag">Private token vesting on Starknet</div>
+    <div class="play">
+      <svg width="44" height="50" viewBox="0 0 44 50"><path d="M2 2 L42 25 L2 48 Z" fill="#28262a" /></svg>
+    </div>
+    <div class="pmeta">Watch the walkthrough &middot; 2 min &middot; live on mainnet</div>
+  </div>
+</div>
 
 <div class="sheet" id="flow">
   <h2>Where the money goes, and what the chain records</h2>
