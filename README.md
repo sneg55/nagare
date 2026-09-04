@@ -1,20 +1,29 @@
 # Nagare
 
+[![Starknet mainnet](https://img.shields.io/badge/Starknet-mainnet-28262a)](https://voyager.online/contract/0x00ae22ea6b8c2e10bb19450d4caac7d31c89168379e4aef02d83e3eb8f03e323)
+[![snforge 46 passing](https://img.shields.io/badge/snforge-46%20passing-3f7d20)](tests/test_nagare.cairo)
+[![Audit none](https://img.shields.io/badge/audit-none-a33a3a)](#status)
+[![License MIT](https://img.shields.io/badge/license-MIT-4a4a4c)](LICENSE)
+[![Live app](https://img.shields.io/badge/app-nagare--6go.pages.dev-28262a)](https://nagare-6go.pages.dev)
+
 Private token vesting on Starknet. A sender funds a lockup from a shielded STRK20
 balance, the recipient withdraws what has vested into a private note, and no wallet
 address of either party appears in any Nagare transaction.
 
-Nagare is a STRK20 anonymizer. The sender and the recipient of a schedule are Stark-curve
-public keys generated in the browser, not wallet addresses, and every withdrawal,
-cancellation, re-key and sale is an ECDSA signature over the operation, bound to the
-chain, the contract, the schedule, the note being paid into and a nonce.
+Nagare is a STRK20 anonymizer. Each side of a schedule is a Stark-curve public key
+generated in the browser, and every withdrawal, cancellation, re-key and sale is an ECDSA
+signature over the operation, bound to the chain, the contract, the schedule, the note
+being paid into and a nonce.
 
 ## Why keys instead of addresses
 
 Every on-chain vesting contract today publishes the cap table. Open a Tokei or Sablier
-stream on Voyager and you see who funds whom, on what schedule, for how much, forever.
-Nagare moves the funding and the payouts inside the STRK20 pool: the pool pays Nagare
-and Nagare pays the pool, so the graph between sender and recipient is never drawn.
+stream on Voyager and you see who funds whom, on what schedule and for how much, and that
+record lasts as long as the chain does. Nagare moves the funding and the payouts inside
+the STRK20 pool: the pool pays Nagare and Nagare pays the pool, so neither wallet ever
+appears next to the other.
+
+![The money path, and which hops are public](media/schematics/flow.png)
 
 ## What the chain can and cannot see
 
@@ -27,12 +36,12 @@ and Nagare pays the pool, so the graph between sender and recipient is never dra
 | | Whether a schedule is listed for sale, and every offer's price, expiry and buyer key |
 | | Every signature and every calldata item, including note ids |
 
-The word is disclosed, not hidden. Amounts, schedules and timing are public. A
-distinctive amount withdrawn shortly after a distinctive shield can be correlated. A key
-reused across schedules links those schedules, which is why sender keys are per schedule.
-Shielding itself publishes the depositor's address and the amount. The exact claim is
-that no wallet address of either party appears in any Nagare transaction, and that is
-the only claim.
+Disclosed is the operative word. Amounts, schedules and timing are public. A distinctive
+amount withdrawn shortly after a distinctive shield can be correlated. A key reused across
+schedules links those schedules, which is why sender keys are per schedule. Shielding
+itself publishes the depositor's address and the amount. The claim is that no wallet
+address of either party appears in any Nagare transaction, and it does not extend past
+that.
 
 ## Operations
 
@@ -52,18 +61,37 @@ All eight run through `privacy_invoke`, callable only by the STRK20 pool.
 Vesting is linear from `start` to `end` with a `cliff` before which nothing is
 withdrawable, the same curve as Tokei's LockupLinear.
 
+![What vests over time, and what a cancel returns](media/schematics/vesting.png)
+
 The contract's ABI calls a schedule a stream, in `get_stream`, `stream_count` and every
 `stream_id` argument. It is deployed with no upgrade path, so those names are fixed;
 everything a person reads says schedule.
 
 Every operation is a STRK20 private transaction, and the pool charges a flat 6 STRK fee
 for each one, taken from the sender's shielded balance on top of the amount being moved.
-That fee is the pool's, not Nagare's.
+The pool collects that fee, and Nagare takes nothing.
+
+## Keys
+
+One wallet signature produces a seed, and every key Nagare needs is derived from it by a
+fixed path, so a new browser rebuilds them from the wallet alone. The browser stores
+public keys and derivation paths, never a private key.
+
+![Where Nagare keys come from](media/schematics/keys.png)
+
+The exception is a key that arrives in a claim link, which the sender generated in their
+own browser. No wallet can rebuild it, so a recipient should re-key onto a key of their
+own as soon as they arrive. [Keys and recovery](https://nagare-6go.pages.dev/docs/keys)
+covers what that means in practice.
 
 ## Try it
 
 [nagare-6go.pages.dev](https://nagare-6go.pages.dev) reads mainnet directly. Browsing
 needs no wallet; opening or moving a schedule needs Ready with STRK20 enabled.
+
+The [docs](https://nagare-6go.pages.dev/docs) cover the key model, a guide for each side
+of a schedule, recovery, and a reference with the contract, the disclosure table and every
+error the app can show.
 
 ## Deployment
 
@@ -82,11 +110,17 @@ address, and this table is how you tell which one you are looking at.
 ## Status
 
 Create, Withdraw and Cancel are proven on Starknet mainnet, each carrying pool events and
-a Nagare event; the hashes are in [`strk20.json`](strk20.json). The contract has 46 tests
-green under snforge, including a signature vector generated in TypeScript and verified in
-Cairo so the browser signer and the contract cannot drift.
+a Nagare event; the hashes are in [`strk20.json`](strk20.json). List has also run against
+the deployed contract, and schedule 7 was opened uncancelable, carrying
+`0x3beacfb8418e802316632224f14b0902b6f61b5c7f06b18843cd1e0d39fac52` as its sender key,
+which is the published constant no private key exists for.
 
-The product client and the demo are in progress.
+The contract has 46 tests green under snforge, including a signature vector generated in
+TypeScript and verified in Cairo so the browser signer and the contract cannot drift.
+
+Transfer and the sale path, Offer through Accept and Reclaim, are implemented and covered
+by tests, and neither has run on mainnet. Every schedule on the contract is still at offer
+generation 0.
 
 Not audited.
 
@@ -98,6 +132,9 @@ snforge test
 ```
 
 Toolchain versions are pinned in `.tool-versions`.
+
+The web client is in [`web/`](web). The demo video and the schematics above are built
+from [`media/demo-src/`](media/demo-src).
 
 ## License
 

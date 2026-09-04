@@ -8,7 +8,8 @@
     "capture:ui": "for f in ui/*.json; do npx testreel \"$f\" --format mp4 || exit 1; done",
     "cards": "node render-cards.mjs",
     "tts": "node --env-file=.env tts.mjs",
-    "build": "node --env-file=.env build-video.mjs"
+    "build": "node --env-file=.env build-video.mjs",
+    "schematics": "node schematics/render.mjs"
   },
   "devDependencies": {
     "playwright": "^1.61.1",

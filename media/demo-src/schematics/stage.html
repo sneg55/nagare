@@ -1,0 +1,198 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=block" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #ffffff;
+    --cream: #f3f1eb;
+    --ink: #28262a;
+    --graphite: #4a4a4c;
+    --fog: #dddcdd;
+    --edge: #8a8a8c;
+    --sky: #97cde5;
+    --sage: #c8dfaa;
+    --ui: Inter, system-ui, sans-serif;
+    --display: "Source Serif 4", Georgia, serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--cream); font-family: var(--ui); color: var(--ink); }
+  .sheet { width: 1600px; background: var(--cream); padding: 64px 72px; }
+  h2 { font-family: var(--display); font-size: 44px; font-weight: 600; margin-bottom: 10px; }
+  .sub { font-size: 24px; color: var(--graphite); margin-bottom: 44px; max-width: 82ch; line-height: 1.45; }
+  svg { display: block; overflow: visible; }
+  .node { fill: var(--paper); stroke: var(--fog); stroke-width: 2; }
+  .node.hl { fill: var(--paper); stroke: var(--ink); stroke-width: 2.5; }
+  .nlab { font-family: var(--ui); font-size: 24px; font-weight: 500; fill: var(--ink); text-anchor: middle; }
+  .nsub { font-family: var(--ui); font-size: 19px; fill: var(--edge); text-anchor: middle; }
+  .arrow { stroke: var(--ink); stroke-width: 2.5; fill: none; }
+  .alab { font-family: var(--ui); font-size: 20px; fill: var(--graphite); text-anchor: middle; }
+  .zone { fill: var(--sky); opacity: 0.22; }
+  .zone-line { stroke: var(--edge); stroke-width: 2; stroke-dasharray: 6 6; fill: none; }
+  .zlab { font-family: var(--ui); font-size: 21px; font-weight: 500; fill: var(--ink); text-anchor: middle; }
+  .pub { font-family: var(--ui); font-size: 20px; fill: var(--graphite); text-anchor: middle; }
+  .curve-fill { fill: var(--sky); opacity: 0.35; }
+  .curve { stroke: var(--ink); stroke-width: 3; fill: none; }
+  .axis { stroke: var(--edge); stroke-width: 2; }
+  .guide { stroke: var(--edge); stroke-width: 2; stroke-dasharray: 5 5; }
+  .refund { fill: var(--sage); stroke: var(--edge); stroke-width: 1.5; }
+  .accrual { stroke: var(--edge); stroke-width: 2.5; stroke-dasharray: 8 7; fill: none; }
+  .cancel { stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 4 6; }
+  .lstart { text-anchor: start; }
+  .lend { text-anchor: end; }
+  .tick { font-family: var(--ui); font-size: 20px; fill: var(--graphite); text-anchor: middle; }
+  .key { font-family: var(--ui); font-size: 21px; fill: var(--ink); text-anchor: middle; }
+</style>
+</head>
+<body>
+
+<div class="sheet" id="flow">
+  <h2>Where the money goes, and what the chain records</h2>
+  <p class="sub">
+    Shielding and unshielding are ordinary public deposits. Everything between them happens
+    inside the STRK20 pool, where no address of either party appears.
+  </p>
+  <svg width="1456" height="330" viewBox="0 0 1456 330">
+    <rect class="zone" x="308" y="8" width="840" height="180" rx="16" />
+    <rect class="zone-line" x="308" y="8" width="840" height="180" rx="16" />
+    <text class="zlab" x="728" y="222">No address of either party appears in any of this</text>
+
+    <rect class="node" x="28" y="52" width="200" height="92" rx="16" />
+    <text class="nlab" x="128" y="96">Sender wallet</text>
+    <text class="nsub" x="128" y="124">public</text>
+
+    <path class="arrow" d="M238 98 H 310" marker-end="url(#tip)" />
+    <text class="alab" x="278" y="76">shield</text>
+
+    <rect class="node hl" x="328" y="52" width="200" height="92" rx="16" />
+    <text class="nlab" x="428" y="96">STRK20 pool</text>
+    <text class="nsub" x="428" y="124">shielded balance</text>
+
+    <path class="arrow" d="M538 98 H 610" marker-end="url(#tip)" />
+    <text class="alab" x="578" y="76">fund</text>
+
+    <rect class="node hl" x="628" y="52" width="200" height="92" rx="16" />
+    <text class="nlab" x="728" y="96">Nagare</text>
+    <text class="nsub" x="728" y="124">holds the schedule</text>
+
+    <path class="arrow" d="M838 98 H 910" marker-end="url(#tip)" />
+    <text class="alab" x="878" y="76">withdraw</text>
+
+    <rect class="node hl" x="928" y="52" width="200" height="92" rx="16" />
+    <text class="nlab" x="1028" y="96">Private note</text>
+    <text class="nsub" x="1028" y="124">in the pool</text>
+
+    <path class="arrow" d="M1138 98 H 1210" marker-end="url(#tip)" />
+    <text class="alab" x="1178" y="76">unshield</text>
+
+    <rect class="node" x="1228" y="52" width="200" height="92" rx="16" />
+    <text class="nlab" x="1328" y="96">Recipient wallet</text>
+    <text class="nsub" x="1328" y="124">public</text>
+
+    <text class="pub" x="128" y="288">Address and</text>
+    <text class="pub" x="128" y="314">amount on chain</text>
+    <text class="pub" x="1328" y="288">Address and</text>
+    <text class="pub" x="1328" y="314">amount on chain</text>
+    <text class="pub" x="728" y="288">Amounts, dates and keys are public.</text>
+    <text class="pub" x="728" y="314">The wallets behind the keys are not recorded.</text>
+
+    <defs>
+      <marker id="tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0 0 L10 5 L0 10 z" fill="#28262a" />
+      </marker>
+    </defs>
+  </svg>
+</div>
+
+<div class="sheet" id="vesting">
+  <h2>What vests, and what a cancel takes back</h2>
+  <p class="sub">
+    The amount accrues linearly from the day the schedule is funded. The cliff controls only
+    when withdrawal opens, so the whole accrued amount becomes available at once when it
+    passes.
+  </p>
+  <svg width="1456" height="470" viewBox="0 0 1456 470">
+    <path class="curve-fill" d="M120 330 L420 330 L420 244 L1040 66 L1300 66 L1300 330 Z" />
+
+    <line class="guide" x1="120" y1="66" x2="1330" y2="66" />
+    <line class="guide" x1="420" y1="66" x2="420" y2="330" />
+    <line class="guide" x1="1040" y1="66" x2="1040" y2="330" />
+
+    <path class="accrual" d="M120 330 L1040 66" />
+    <path class="curve" d="M120 330 L420 330 L420 244 L1040 66 L1300 66" />
+    <line class="axis" x1="120" y1="330" x2="1330" y2="330" />
+
+    <line class="cancel" x1="560" y1="66" x2="560" y2="330" />
+    <rect class="refund" x="568" y="66" width="18" height="138" rx="4" />
+    <text class="alab lend" x="544" y="118">Cancelled here, this much</text>
+    <text class="alab lend" x="544" y="146">returns to the sender</text>
+    <text class="alab" x="880" y="296">The recipient keeps everything under the line</text>
+
+    <text class="tick" x="120" y="368">Funded</text>
+    <text class="tick" x="420" y="368">Cliff</text>
+    <text class="tick" x="1040" y="368">Fully vested</text>
+    <text class="tick" x="152" y="58">Total</text>
+    <text class="alab" x="255" y="320">Nothing withdrawable</text>
+
+    <line class="accrual" x1="120" y1="424" x2="180" y2="424" />
+    <text class="alab lstart" x="194" y="431">accrued from the day it is funded</text>
+    <line class="curve" x1="600" y1="424" x2="660" y2="424" />
+    <text class="alab lstart" x="674" y="431">withdrawable</text>
+  </svg>
+</div>
+
+<div class="sheet" id="keys">
+  <h2>Where the keys come from</h2>
+  <p class="sub">
+    One wallet signature produces the seed every Nagare key is derived from, so a new browser
+    rebuilds them all. A key that arrives in a claim link is the exception.
+  </p>
+  <svg width="1456" height="420" viewBox="0 0 1456 420">
+    <rect class="node hl" x="10" y="120" width="250" height="100" rx="16" />
+    <text class="nlab" x="135" y="162">Your wallet</text>
+    <text class="nsub" x="135" y="190">signs once</text>
+
+    <path class="arrow" d="M270 170 H 350" marker-end="url(#tip3)" />
+    <text class="alab" x="310" y="150">seed</text>
+
+    <rect class="node hl" x="360" y="120" width="250" height="100" rx="16" />
+    <text class="nlab" x="485" y="162">Derivation</text>
+    <text class="nsub" x="485" y="190">poseidon over the seed</text>
+
+    <path class="arrow" d="M620 170 C 700 170, 700 58, 780 58" marker-end="url(#tip3)" />
+    <path class="arrow" d="M620 170 H 780" marker-end="url(#tip3)" />
+    <path class="arrow" d="M620 170 C 700 170, 700 282, 780 282" marker-end="url(#tip3)" />
+
+    <rect class="node" x="790" y="16" width="330" height="84" rx="16" />
+    <text class="key" x="955" y="52">Sender key</text>
+    <text class="nsub" x="955" y="80">one slot per schedule, 32 in all</text>
+
+    <rect class="node" x="790" y="128" width="330" height="84" rx="16" />
+    <text class="key" x="955" y="164">Recipient key</text>
+    <text class="nsub" x="955" y="192">one per schedule id</text>
+
+    <rect class="node" x="790" y="240" width="330" height="84" rx="16" />
+    <text class="key" x="955" y="276">Offer key</text>
+    <text class="nsub" x="955" y="304">one per offer you place</text>
+
+    <rect class="node" x="1170" y="128" width="276" height="84" rx="16" />
+    <text class="key" x="1308" y="164">Claim link key</text>
+    <text class="nsub" x="1308" y="192">made in the sender&rsquo;s browser</text>
+
+    <text class="pub" x="1308" y="256">Not derived from your wallet.</text>
+    <text class="pub" x="1308" y="282">Recovery cannot rebuild it, so</text>
+    <text class="pub" x="1308" y="308">re-key onto one of your own.</text>
+
+    <defs>
+      <marker id="tip3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0 0 L10 5 L0 10 z" fill="#28262a" />
+      </marker>
+    </defs>
+  </svg>
+</div>
+
+</body>
+</html>
