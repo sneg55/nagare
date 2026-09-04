@@ -58,6 +58,20 @@ export default function Receiving() {
         vests and less of it stays exposed to a cancel.
       </p>
 
+      <h2>If you bought the schedule</h2>
+      <p>
+        A purchase moves the schedule onto the key you made when you placed the offer. Nagare
+        promotes that key to your recipient role as soon as the contract shows the sale went
+        through, so the schedule starts behaving like any other one of yours, and a fresh
+        browser finds it from your wallet.
+      </p>
+      <p>
+        What you did not buy is protection from the sender. A sale leaves the sender key
+        untouched, so on a cancelable schedule they can still cancel and take the unvested
+        part back from you. Withdrawing promptly is what limits the exposure, and an
+        uncancelable schedule removes it.
+      </p>
+
       <h2>Withdrawing</h2>
       <p>
         Nothing can be withdrawn before the cliff. After it, the schedule page shows what is

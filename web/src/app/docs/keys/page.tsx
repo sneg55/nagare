@@ -44,6 +44,17 @@ export default function Keys() {
         your wallet, and the offers you placed. It reads only the contract, so it works from a
         browser that has never seen Nagare before.
       </p>
+      <p>
+        An offer key does double duty. It authorizes the offer while it stands, and it becomes
+        the recipient key if the holder accepts, because that is the key the contract writes to
+        the schedule. Nagare promotes it to your recipient role the moment the contract shows
+        the sale, so a schedule you bought needs nothing extra from you.
+      </p>
+      <p>
+        Each offer gets its own key, tied to the round it was made in, and the escrow behind an
+        offer stays with that round until you reclaim it. An offer that ran out therefore keeps
+        its own key and its own money, separate from anything you offer later.
+      </p>
 
       <h2>The exception: a key that arrived in a claim link</h2>
       <p>

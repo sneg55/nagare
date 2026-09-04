@@ -89,6 +89,13 @@ export default function Reference() {
         cannot be moved elsewhere while a price is standing against it.
       </p>
       <p>
+        Each offer is numbered, and its escrow belongs to that number. Opening a new offer does
+        not clear an earlier one, so an offer that expired without being accepted keeps its
+        STRK in the contract until its buyer reclaims it. The contract can only read back the
+        newest round, so Nagare offers a reclaim for every round your browser holds a key for
+        and lets the contract say which of them still holds anything.
+      </p>
+      <p>
         Neither of them covers the sender. A sale moves the recipient key and leaves the sender
         key alone, so on a cancelable schedule the sender can still cancel after you have paid
         and take the unvested part back. Price that in, or buy an uncancelable one, where the

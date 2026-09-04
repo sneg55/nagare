@@ -76,6 +76,23 @@ Every operation is a STRK20 private transaction, and the pool charges a flat 6 S
 for each one, taken from the sender's shielded balance on top of the amount being moved.
 The pool collects that fee, and Nagare takes nothing.
 
+## Selling a schedule
+
+A holder can open their schedule to offers, and a buyer escrows a price against it under a
+key derived from their own wallet. Accepting moves the schedule to that key and pays the
+holder in one call. Two rules protect the buyer: an offer can only be accepted while the
+withdrawn amount still matches what it was when the offer was made, and a live offer
+blocks a transfer.
+
+Neither rule covers the sender. A sale writes `recipient_pk` and leaves `sender_pk` alone,
+so on a cancelable schedule the sender can still cancel after the sale and take the
+unvested part back from the buyer. An uncancelable schedule is the only version that is
+safe to buy without trusting whoever opened it.
+
+Offers are numbered, and each one's escrow belongs to its number. A new offer does not
+clear an older one, so an offer that expires keeps its STRK in the contract until its
+buyer reclaims it, under the key that made it.
+
 ## Keys
 
 One wallet signature produces a seed, and every key Nagare needs is derived from it by a

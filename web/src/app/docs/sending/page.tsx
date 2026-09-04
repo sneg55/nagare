@@ -58,6 +58,12 @@ export default function Sending() {
         tells them which kind they have. This choice is fixed when the schedule is opened and
         no later operation changes it.
       </p>
+      <p>
+        Selling the schedule does not hand the choice on either. A sale moves the recipient
+        key and leaves the sender key with you, so you keep the ability to cancel against
+        whoever buys it. A buyer paying for a cancelable schedule is trusting you the same way
+        the original recipient was.
+      </p>
       <h3>How the recipient gets their key</h3>
       <p>
         A claim link generates the recipient key in your browser and hands you a URL
