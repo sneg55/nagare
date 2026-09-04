@@ -16,6 +16,7 @@ import { keyForRecipient, sameKey } from '@/lib/nagare/derive'
 import { claimLink } from '@/lib/nagare/claim'
 import { isUncancelable } from '@/lib/nagare/cancelable'
 import { openedHere, unwatch, watched } from '@/lib/nagare/watch'
+import { recoverFromSeed } from '@/lib/nagare/recover'
 import { buildPayout } from '@/lib/nagare/flow'
 import { keyedActions, signKeyed } from '@/lib/nagare/actions'
 import {
@@ -54,6 +55,29 @@ export function StreamDetail({ id }: { id: number }) {
   const [myKeyNote, setMyKeyNote] = useState<string | null>(null)
   const [showingKey, setShowingKey] = useState(false)
   const [dropped, setDropped] = useState(false)
+  const [hunting, setHunting] = useState(false)
+  const [huntNote, setHuntNote] = useState<string | null>(null)
+
+  const findMyKey = async () => {
+    setHunting(true)
+    setHuntNote(null)
+    try {
+      const { conn } = await requireWallet()
+      const found = await recoverFromSeed(await unlock())
+      if (found.some((f) => f.id === id)) {
+        setKeyTick((t) => t + 1)
+        await load()
+      } else {
+        setHuntNote(
+          `Nothing on this schedule matches a key from ${shortHex(conn.address)}. If you opened it with another wallet, connect that one.`,
+        )
+      }
+    } catch (e) {
+      setHuntNote((e as Error).message)
+    } finally {
+      setHunting(false)
+    }
+  }
 
   const showMyKey = async () => {
     setShowingKey(true)
@@ -329,12 +353,20 @@ export function StreamDetail({ id }: { id: number }) {
                   </p>
                   {hiddenRole ? null : (
                     <p className="muted">
-                      If it should be yours, rebuild your keys from your wallet on the
-                      schedules page, or open the claim link that carries the
-                      recipient&rsquo;s key.
+                      If it should be yours, check your wallet for it below, or open the
+                      claim link that carries the recipient&rsquo;s key.
                     </p>
                   )}
                   <div className="row-actions">
+                    {hiddenRole ? null : (
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => void findMyKey()}
+                        disabled={hunting}
+                      >
+                        {hunting ? 'Checking the contract\u2026' : 'Look for my key in my wallet'}
+                      </button>
+                    )}
                     {hiddenRole ? null : (
                       <button className="btn" onClick={() => void showMyKey()} disabled={showingKey}>
                         {showingKey ? 'Deriving\u2026' : 'Show my Nagare key for this schedule'}
@@ -380,6 +412,11 @@ export function StreamDetail({ id }: { id: number }) {
                         your schedules page picks the schedule up.
                       </p>
                     </div>
+                  ) : null}
+                  {huntNote ? (
+                    <p className="muted" role="status">
+                      {huntNote}
+                    </p>
                   ) : null}
                   {myKeyNote ? (
                     <p className="muted" role="status">

@@ -54,7 +54,7 @@ export function unmarkOpened(id: number) {
   window.localStorage.setItem(OPENED_KEY, JSON.stringify(readOpened().filter((x) => x !== id)))
 }
 
-const RECOVERED_KEY = 'nagare.recovered.v1'
+const RECOVERED_KEY = 'nagare.recovered.v2'
 
 function readRecovered(): string[] {
   if (typeof window === 'undefined') return []
