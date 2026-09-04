@@ -1,4 +1,6 @@
 import type { OpName } from './actions'
+import { POOL_FEE } from './config'
+import { toStrk } from './format'
 
 export const REVEAL: Record<string, string> = {
   Create:
@@ -42,5 +44,5 @@ export const HONEST_LIMITS = [
   'Moving STRK into the pool is a public transaction that puts your address and the amount on chain.',
   'Amounts and timing can be correlated: a distinctive amount withdrawn shortly after a distinctive deposit is a link.',
   'A key used for two schedules links them, which is why every schedule gets a fresh sender key.',
-  'The pool charges 6 STRK for each private transaction, taken from your shielded balance.',
+  `The pool charges ${toStrk(POOL_FEE)} STRK for each private transaction, taken from your shielded balance.`,
 ]

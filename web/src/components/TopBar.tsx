@@ -15,6 +15,7 @@ export function TopBar({ cta = true }: { cta?: boolean }) {
       <nav>
         <Link href="/app/schedules">My Schedules</Link>
         <Link href="/app/market">Marketplace</Link>
+        <Link href="/docs">Docs</Link>
         {cta ? (
           <Link href="/app/create" className="btn">
             New schedule
