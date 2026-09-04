@@ -105,6 +105,13 @@ export default function MarketPage() {
                       </div>
                     ) : null}
                   </dl>
+                  {isUncancelable(schedule) ? null : (
+                    <p className="muted">
+                      Buying this does not stop the sender cancelling it. They keep that key
+                      through a sale, and until it fully vests they can take the unvested part
+                      back from you.
+                    </p>
+                  )}
                   <p className="muted">
                     {live
                       ? 'Someone has already escrowed a price. Yours would replace it once theirs expires.'

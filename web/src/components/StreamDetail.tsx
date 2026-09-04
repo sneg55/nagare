@@ -522,6 +522,13 @@ export function StreamDetail({ id }: { id: number }) {
                       ? 'You already cancelled this schedule.'
                       : 'This schedule is fully vested, so there is nothing left to cancel.'}
                 </p>
+                {canCancel(schedule, now) && !isRecipient ? (
+                  <p className="muted">
+                    A different key holds this schedule now. Cancelling would take the
+                    unvested {toStrk(refundIfCanceledNow(schedule, now))} STRK back from
+                    whoever that is, including someone who has paid for it.
+                  </p>
+                ) : null}
               </div>
             ) : null}
 
@@ -641,10 +648,10 @@ export function StreamDetail({ id }: { id: number }) {
                   </p>
                   <p className="muted">
                     Whether a schedule can be cancelled is fixed when it is opened, and no
-                    operation on the contract changes it afterwards. You cannot give the
-                    right up here, so the recipient has to trust you for as long as the
-                    schedule runs. Open the next one uncancelable if you would rather they
-                    did not have to.
+                    operation on the contract changes it afterwards. Selling the schedule does
+                    not change it either: the sender key stays yours, so this button keeps
+                    working against whoever holds the schedule next. Open the next one
+                    uncancelable if you would rather nobody had to trust you for that.
                   </p>
                   <div>
                     <button className="btn" onClick={runCancel} disabled={cancel.busy}>

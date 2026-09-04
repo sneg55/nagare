@@ -89,6 +89,12 @@ export default function Reference() {
         cannot be moved elsewhere while a price is standing against it.
       </p>
       <p>
+        Neither of them covers the sender. A sale moves the recipient key and leaves the sender
+        key alone, so on a cancelable schedule the sender can still cancel after you have paid
+        and take the unvested part back. Price that in, or buy an uncancelable one, where the
+        sender key is a constant with no private key behind it.
+      </p>
+      <p>
         Listing and offering have both run on mainnet. Accepting an offer and reclaiming one
         have not, so that half of the path rests on its tests rather than on a transaction you
         can go and read.
