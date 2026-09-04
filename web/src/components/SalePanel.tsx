@@ -107,9 +107,9 @@ export function SalePanel({
 
   const pendingOffer = status === 'live' || status === 'expired'
 
-  if (isRecipient && !pendingOffer) return null
+  if (isRecipient && !pendingOffer && stale.length === 0) return null
 
-  if (!pendingOffer && !schedule.sellable) {
+  if (!pendingOffer && !schedule.sellable && stale.length === 0) {
     return (
       <div className="card card-outlined stack-tight">
         <h3>Not for sale</h3>
@@ -122,7 +122,13 @@ export function SalePanel({
 
   return (
     <div className="card card-outlined stack">
-      <h3>{status === 'live' ? 'There is an offer on this schedule' : 'Buy this schedule'}</h3>
+      <h3>
+        {status === 'live'
+          ? 'There is an offer on this schedule'
+          : isRecipient
+            ? 'Offers on this schedule'
+            : 'Buy this schedule'}
+      </h3>
 
       <ActionStatus phase={makeOffer.phase} op="Offer" reset={makeOffer.reset} />
       <ActionStatus phase={accept.phase} op="Accept" reset={accept.reset} />
