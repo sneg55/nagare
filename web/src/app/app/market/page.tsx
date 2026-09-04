@@ -52,7 +52,9 @@ export default function MarketPage() {
           <div className="grid-cards">
             {rows.map(({ id, schedule, offer }) => {
               const remaining = schedule.total - schedule.withdrawn
-              const live = offerStatusOf(offer, now) === 'live'
+              const offerStatus = offerStatusOf(offer, now)
+              const live = offerStatus === 'live'
+              const stranded = offerStatus === 'expired'
               return (
                 <Link
                   href={`/app/schedules/${id}`}
@@ -91,12 +93,14 @@ export default function MarketPage() {
                       <dt>Sender can cancel</dt>
                       <dd>{isUncancelable(schedule) ? 'No' : 'Yes'}</dd>
                     </div>
-                    {live ? (
+                    {live || stranded ? (
                       <div className="row">
-                        <dt>Standing offer</dt>
+                        <dt>{live ? 'Standing offer' : 'Expired offer'}</dt>
                         <dd>
                           {toStrk(offer.price)} STRK{' '}
-                          <span className="muted">(until {when(offer.expiry)})</span>
+                          <span className="muted">
+                            ({live ? 'until' : 'expired'} {when(offer.expiry)})
+                          </span>
                         </dd>
                       </div>
                     ) : null}
@@ -104,7 +108,9 @@ export default function MarketPage() {
                   <p className="muted">
                     {live
                       ? 'Someone has already escrowed a price. Yours would replace it once theirs expires.'
-                      : 'No offer standing on it yet.'}
+                      : stranded
+                        ? 'An earlier offer ran out before the holder took it, and the buyer has not reclaimed their escrow. You can offer against it now.'
+                        : 'No offer standing on it yet.'}
                   </p>
                 </Link>
               )

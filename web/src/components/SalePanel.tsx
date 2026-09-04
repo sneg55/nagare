@@ -166,8 +166,11 @@ export function SalePanel({
       {status === 'expired' ? (
         <div className="stack-tight">
           <p className="muted">
-            The last offer expired {until(offer.expiry, now)} without being accepted.
-            {isBuyer ? ' Your escrow is still yours to take back.' : ''}
+            The offer of {toStrk(offer.price)} STRK expired {until(offer.expiry, now)} without
+            being accepted, so it can no longer be taken.
+            {isBuyer
+              ? ' Your escrow is still in the contract and yours to take back.'
+              : ' The escrow stays in the contract until the buyer reclaims it.'}
           </p>
           {isBuyer ? (
             <div>
