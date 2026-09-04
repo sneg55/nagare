@@ -130,6 +130,9 @@ only admitted token.
 There is no owner, no pause and no upgrade path. A fix means a new class at a new
 address, and this table is how you tell which one you are looking at.
 
+The class is verified on Voyager, so the Cairo behind that address is readable next to it
+without taking this repository's word for the match.
+
 ## Status
 
 Create, Withdraw and Cancel are proven on Starknet mainnet, each carrying pool events and
@@ -145,6 +148,10 @@ Schedule 6 has been through the whole sale path on mainnet: listed, offered agai
 twice, accepted at generation 2, and then withdrawn from by its new holder. Transfer and
 Reclaim are implemented and covered by tests, and have not run against the deployed
 contract yet.
+
+[`strk20.json`](strk20.json) carries one mainnet hash for each operation that has run:
+Create, Withdraw, Cancel, List, Offer, Accept, and the buyer's withdrawal after the sale.
+Every one of them succeeded and carries events from both the pool and Nagare.
 
 Not audited.
 
