@@ -2,6 +2,7 @@
 name = "nagare"
 version = "0.1.0"
 edition = "2024_07"
+license = "MIT"
 
 [dependencies]
 starknet = "2.20.0"
