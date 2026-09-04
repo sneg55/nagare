@@ -56,20 +56,28 @@ export function deleteKey(id: string) {
 
 const IN_FLIGHT_KEY = 'nagare.inflight.v1'
 
-export type InFlight = { op: string; streamId: string; at: number }
+const PAGE_LOAD = Math.random().toString(36).slice(2)
+const OTHER_PAGE_GRACE_MS = 120_000
+
+export type InFlight = { op: string; streamId: string; at: number; page?: string }
 
 export function readInFlight(): InFlight | null {
   if (typeof window === 'undefined') return null
   try {
     const raw = window.localStorage.getItem(IN_FLIGHT_KEY)
-    return raw ? (JSON.parse(raw) as InFlight) : null
+    if (!raw) return null
+    const held = JSON.parse(raw) as InFlight
+    if (held.page === PAGE_LOAD) return held
+    if (Date.now() - held.at < OTHER_PAGE_GRACE_MS) return held
+    window.localStorage.removeItem(IN_FLIGHT_KEY)
+    return null
   } catch {
     return null
   }
 }
 
 export function writeInFlight(v: InFlight) {
-  window.localStorage.setItem(IN_FLIGHT_KEY, JSON.stringify(v))
+  window.localStorage.setItem(IN_FLIGHT_KEY, JSON.stringify({ ...v, page: PAGE_LOAD }))
 }
 
 export function clearInFlight() {
