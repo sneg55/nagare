@@ -50,12 +50,12 @@ export default function Receiving() {
         The claim page states whether the sender can cancel. If it says they cannot, the
         schedule was opened with a published constant in place of a sender key, no private key
         for it exists, and the full amount will vest on the dates shown. You can verify that
-        against the contract rather than taking anyone&rsquo;s word for it.
+        against the contract yourself.
       </p>
       <p>
         If it says they can, they are able to take back whatever has not vested, at any time
-        until the schedule fully vests. Before the cliff that is everything. Withdrawing as it
-        vests is what reduces the amount exposed to a cancel.
+        until the schedule fully vests. Before the cliff that is everything. Withdraw as it
+        vests and less of it stays exposed to a cancel.
       </p>
 
       <h2>Withdrawing</h2>

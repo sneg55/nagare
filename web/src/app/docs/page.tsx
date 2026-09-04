@@ -14,7 +14,7 @@ export default function DocsHome() {
         <h1>Start here</h1>
         <p className="lead">
           Nagare vests tokens on Starknet without putting either party on a public ledger.
-          This page covers the one idea the rest of the product rests on. Read it before
+          Everything else in these docs follows from the idea on this page. Read it before
           you move any money.
         </p>
       </div>
@@ -22,8 +22,8 @@ export default function DocsHome() {
       <h2>The idea</h2>
       <p>
         A vesting schedule usually belongs to an address. Yours funds it, theirs receives
-        it, and anyone reading the chain can put those two together and keep the answer
-        forever.
+        it, and anyone reading the chain can pair the two, for as long as the chain
+        exists.
       </p>
       <p>
         In Nagare a schedule belongs to a <strong>key</strong>. When you open one, your
@@ -34,8 +34,8 @@ export default function DocsHome() {
         pool when someone withdraws.
       </p>
       <p>
-        Your wallet still signs the outer transaction, and it still pays the fee. What it
-        does not do is appear beside the other party.
+        Your wallet still signs the outer transaction, and it still pays the fee. It never
+        appears beside the other party.
       </p>
 
       <h2>The two keys on every schedule</h2>
@@ -50,10 +50,10 @@ export default function DocsHome() {
         </li>
       </ul>
       <p>
-        Holding a key is what makes you the sender or the recipient. There is no account and
-        no login, so a schedule is reachable from any browser that can rebuild its key, and
-        unreachable from any browser that cannot. <Link href="/docs/keys">Keys and recovery</Link>{' '}
-        is the page that matters most here.
+        Whoever holds a key is the sender or the recipient. There is no account and no
+        login. A browser reaches a schedule when it can rebuild the key, and is locked out
+        otherwise. <Link href="/docs/keys">Keys and recovery</Link> covers what that means
+        in practice.
       </p>
 
       <h2>What it costs</h2>

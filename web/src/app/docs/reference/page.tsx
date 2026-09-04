@@ -70,8 +70,8 @@ export default function Reference() {
       </p>
       <p>
         Read <code>get_stream</code> for the schedule and compare its sender key against that
-        value. It is identical on every uncancelable schedule, which is also the one way this
-        leaks something: an uncancelable schedule is publicly identifiable as one.
+        value. It is identical on every uncancelable schedule, which also means an
+        uncancelable schedule is publicly identifiable as one.
       </p>
 
       <h2 id="selling">Selling a schedule</h2>
@@ -148,8 +148,8 @@ export default function Reference() {
         <div>
           <dt>The wallet changed the note it would pay into</dt>
           <dd>
-            The signature is bound to a specific note, so Nagare refuses rather than sending a
-            payment it cannot prove. Try again.
+            The signature is bound to a specific note, so Nagare refuses to send a payment it
+            cannot prove. Try again.
           </dd>
         </div>
         <div>

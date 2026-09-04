@@ -53,11 +53,10 @@ export default function Keys() {
         of whoever created it.
       </p>
       <p>
-        Clearing site data in the browser that opened the link, before re-keying, therefore
-        puts the schedule out of your reach for good. So does losing the device. Re-keying to
-        a key from your own wallet is what ends this exposure, and it is the reason the claim
-        page pushes you to do it immediately. Until you do, the sender can also still act as
-        you.
+        Clearing site data in that browser before re-keying therefore puts the schedule out
+        of your reach for good, and so does losing the device. Re-keying to a key from your
+        own wallet ends that exposure, which is why the claim page pushes you to do it
+        immediately. Until you do, the sender can also still act as you.
       </p>
 
       <h2>Forgetting a key on purpose</h2>
@@ -76,15 +75,15 @@ export default function Keys() {
         </li>
         <li>
           A key reused across two schedules links them to each other. Nagare derives a fresh
-          sender key per schedule to avoid that, which is what the slots are for.
+          sender key per schedule to avoid that, which is why the slots exist.
         </li>
       </ul>
 
       <h2>Switching wallets</h2>
       <p>
         Roles are scoped to the wallet that derived them, so connecting a different wallet
-        hides the first one&rsquo;s schedules rather than mixing them. They come back when you
-        reconnect the original. A schedule you can see but hold no key for still shows all its
+        hides the first one&rsquo;s schedules. They come back when you reconnect the
+        original. A schedule you can see but hold no key for still shows all its
         public detail, because everything on that page is readable by anyone.
       </p>
     </>
