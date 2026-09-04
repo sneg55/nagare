@@ -60,7 +60,7 @@ function humanize(raw: string): { message: string; retryable: boolean } {
 }
 
 export function useAction(op: OpName, onDone?: () => void) {
-  const { submit, requireWallet, clearPending } = useWallet()
+  const { submit, requireWallet } = useWallet()
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' })
 
   const run = useCallback(
@@ -81,42 +81,20 @@ export function useAction(op: OpName, onDone?: () => void) {
         setPhase({ kind: 'proving' })
         const sent = built
         const onChain = sent.settled
+        const landed = async () => (onChain ? onChain().catch(() => false) : false)
+
+        let hash: string | undefined
+        try {
+          hash = await submit(op, sent.streamId, sent.actions)
+        } catch (e) {
+          if (!(await landed())) throw e
+        }
+
         let seen = false
-        const hash = await new Promise<string | undefined>((resolve, reject) => {
-          let settledAlready = false
-          const finish = (v: string | undefined) => {
-            if (settledAlready) return
-            settledAlready = true
-            resolve(v)
-          }
-          submit(op, sent.streamId, sent.actions).then(finish, (e) => {
-            if (!settledAlready) {
-              settledAlready = true
-              reject(e)
-            }
-          })
-          if (!onChain) return
-          void (async () => {
-            for (let i = 0; i < SETTLE_TRIES && !settledAlready; i += 1) {
-              await wait(SETTLE_EVERY)
-              if (settledAlready) return
-              try {
-                if (await onChain()) {
-                  seen = true
-                  clearPending()
-                  finish(undefined)
-                  return
-                }
-              } catch {}
-            }
-          })()
-        })
-        if (onChain && !seen) {
+        if (onChain) {
           setPhase({ kind: 'settling', hash })
           for (let i = 0; i < SETTLE_TRIES && !seen; i += 1) {
-            try {
-              if (await onChain()) seen = true
-            } catch {}
+            if (await landed()) seen = true
             if (!seen) await wait(SETTLE_EVERY)
           }
         }
@@ -128,7 +106,7 @@ export function useAction(op: OpName, onDone?: () => void) {
         setPhase({ kind: 'failed', ...humanize(raw), detail: raw })
       }
     },
-    [op, submit, onDone, requireWallet, clearPending],
+    [op, submit, onDone, requireWallet],
   )
 
   const reset = useCallback(() => setPhase({ kind: 'idle' }), [])
