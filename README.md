@@ -146,8 +146,7 @@ TypeScript and verified in Cairo so the browser signer and the contract cannot d
 
 Schedule 6 has been through the whole sale path on mainnet: listed, offered against
 twice, accepted at generation 2, withdrawn from by its new holder, and the escrow behind
-the offer that expired reclaimed by the buyer who made it. Transfer is the one operation
-with no mainnet transaction behind it, and it rests on its tests.
+the offer that expired reclaimed by the buyer who made it.
 
 [`strk20.json`](strk20.json) carries one mainnet hash for each operation that has run:
 Create, Withdraw, Cancel, List, Offer, Accept, Reclaim, and the buyer's withdrawal after
